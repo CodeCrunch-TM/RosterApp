@@ -4,18 +4,24 @@ from App.interfaces.RosterFactory import RosterFactory
 from App.models.schedule import Schedule
 from App.models.shift import Shift
 from App.models.staff import Staff
+from App.database import db
 
 
 class SingleRosterFactory(RosterFactory): #this mighg need to be changed based on refaactoring
     def __init__(self) -> None:           #i dont think i violated model rules but eh
         self.roster: Optional[Schedule] = None
 
-    def createRoster(self, roster_data: Optional[Dict[str, Any]] = None) -> Schedule:
-        data = roster_data or {} #the or is cuz i actually dont know how we passing the data, i dont wanna read
+    def createRoster(
+        self,
+        roster_data: Optional[Dict[str, Any]] = None,
+        session: Optional[object] = None,
+        commit: bool = False,
+    ) -> Schedule:
+        data = roster_data or {}
 
         schedule = Schedule(
             name=data.get("name", ""),
-            created_by=data.get("created_by"),
+            created_by=data.get("created_by"), #minor addition 
         )
 
         for s in data.get("shifts", []):
@@ -40,6 +46,13 @@ class SingleRosterFactory(RosterFactory): #this mighg need to be changed based o
             shift = Shift(**shift_kwargs)
 
             schedule.shifts.append(shift)
+            if session is not None:
+                session.add(shift)
+
+        if session is not None:
+            session.add(schedule)
+            if commit:
+                session.commit()
 
         self.roster = schedule
         return schedule

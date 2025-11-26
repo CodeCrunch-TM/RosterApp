@@ -42,23 +42,6 @@ def test_single_roster_factory_creates_schedule_with_shifts():
 
     # print a safe representation (don't call Schedule.get_json — created_at is
     # only populated after DB insert, so avoid .isoformat() on None)
-    def safe_schedule_repr(schedule):
-        return {
-            "id": getattr(schedule, "id", None),
-            "name": schedule.name,
-            "created_by": schedule.created_by,
-            "shift_count": len(schedule.shifts),
-            "shifts": [
-                {
-                    "start_time": s.start_time.isoformat() if s.start_time else None,
-                    "end_time": s.end_time.isoformat() if s.end_time else None,
-                    "staff_id": getattr(s, "staff_id", None),
-                    "staff_username": getattr(s, "staff", None).username if getattr(s, "staff", None) else None,
-                }
-                for s in schedule.shifts
-            ],
-        }
-
     print("SingleRosterFactory produced:", safe_schedule_repr(schedule))
 
     assert schedule.name == "Week 1"
@@ -83,14 +66,15 @@ def test_group_roster_factory_builds_multiple():
     ]
 
     factory = GroupRosterFactory()
-    schedules = factory.createRoster(group_data)
+    schedule_group = factory.createRoster(group_data)
 
     # print all schedules produced by the group factory using the safe repr
-    print("GroupRosterFactory produced:", [safe_schedule_repr(s) for s in schedules])
+    print("GroupRosterFactory produced:", [safe_schedule_repr(s) for s in schedule_group.schedules])
 
-    assert isinstance(schedules, list)
-    assert len(schedules) == 2
-    assert schedules[0].name == "A"
-    assert schedules[1].name == "B"
-    assert len(schedules[0].shifts) == 1
-    assert schedules[0].shifts[0].staff_id == 7
+    # schedule_group is a ScheduleGroup container
+    assert hasattr(schedule_group, "schedules")
+    assert len(schedule_group.schedules) == 2
+    assert schedule_group.schedules[0].name == "A"
+    assert schedule_group.schedules[1].name == "B"
+    assert len(schedule_group.schedules[0].shifts) == 1
+    assert schedule_group.schedules[0].shifts[0].staff_id == 7
