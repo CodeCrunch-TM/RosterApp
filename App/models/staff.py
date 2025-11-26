@@ -1,7 +1,8 @@
 from App.database import db
 from .user import User
+from interfaces import Observer
 
-class Staff(User):
+class Staff(User, Observer):
     id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)
     __mapper_args__ = {
         "polymorphic_identity": "staff",

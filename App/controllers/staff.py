@@ -41,3 +41,6 @@ def clock_out(staff_id, shift_id):
 def get_shift(shift_id):
     shift = db.session.get(Shift, shift_id)
     return shift
+
+def update(ObservableRoster):
+    pass

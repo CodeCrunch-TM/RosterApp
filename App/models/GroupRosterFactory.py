@@ -1,21 +1,33 @@
 from typing import List, Optional, Dict, Any
 from App.interfaces.RosterFactory import RosterFactory
 from App.models.SingleRosterFactory import SingleRosterFactory
+from App.models.ScheduleGroup import ScheduleGroup
 from App.models.schedule import Schedule
 
 
-class GroupRosterFactory(RosterFactory): #shouldnt need to change since i just made it as a subclass of singelrosterfactory
+class GroupRosterFactory(RosterFactory): #class diagram might need updating
 
     def __init__(self) -> None:
         self._single = SingleRosterFactory()
-        self.rosters: List[Schedule] = []
 
-    def createRoster(self, rosters_data: Optional[List[Dict[str, Any]]] = None) -> List[Schedule]:
+    def createRoster(
+        self,
+        rosters_data: Optional[List[Dict[str, Any]]] = None, #not sure how we passing data quite yet since we havent done integration
+        session: Optional[object] = None,
+        commit: bool = False,
+        group_name: Optional[str] = None,
+
+    ) -> ScheduleGroup:
         data_list = rosters_data or []
-        self.rosters = []
+        schedule_group = ScheduleGroup(name=group_name)
 
         for item in data_list:
-            schedule = self._single.createRoster(item)
-            self.rosters.append(schedule)
+            schedule = self._single.createRoster(item, session=session, commit=False)
+            schedule_group.add_schedule(schedule)
 
-        return self.rosters
+        if session is not None:
+            session.add(schedule_group)
+            if commit:
+                session.commit()
+
+        return schedule_group
