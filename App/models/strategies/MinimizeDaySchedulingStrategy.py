@@ -10,25 +10,31 @@ class MinimizeDaySchedulingStrategy(ScheduleStrategy):
 
         schedule_group = ScheduleGroup(name="Minimal Day Schedule")
 
+        # Group shifts by day
+        shifts_by_day = defaultdict(list)
+        for shift in shifts:
+            shifts_by_day[shift.start_time.date()].append(shift)
+
         # Track the set of days each staff member is already working
         active_days = defaultdict(set)
+        staff_index = 0
+        staff_count = len(staff)
 
-        for shift in sorted(shifts, key=lambda s: s.start_time):
+        # Assign all shifts on a day to a single staff to minimize unique days
+        for day, day_shifts in sorted(shifts_by_day.items()):
             # Pick staff with the fewest active days so far
             selected_staff = min(staff, key=lambda s: len(active_days[s.id]))
 
-            # Record the work day for this staff member
-            shift_date = shift.start_time.date()
-            active_days[selected_staff.id].add(shift_date)
+            # Assign all shifts on this day to selected staff
+            for shift in day_shifts:
+                shift.staff_id = selected_staff.id
+                active_days[selected_staff.id].add(day)
 
-            # Build schedule object
-            schedule = Schedule(
-                name=f"Shift {shift_date}",
-                created_by=1
-            )
-            schedule.shifts.append(shift)
-            shift.staff_id = selected_staff.id
-
+            # Build a schedule object for the day
+            schedule = Schedule(name=f"Shifts for {day}", created_by=1)
+            schedule.shifts.extend(day_shifts)
             schedule_group.add_schedule(schedule)
 
-        return schedule_group 
+            staff_index += 1
+
+        return schedule_group

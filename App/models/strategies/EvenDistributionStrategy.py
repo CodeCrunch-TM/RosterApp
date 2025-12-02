@@ -1,27 +1,27 @@
+from collections import defaultdict
 from App.models import ScheduleGroup, Schedule
 from App.interfaces.ScheduleStrategy import ScheduleStrategy
 
 class EvenDistributionStrategy(ScheduleStrategy):
-    
+
     def generateSchedule(self, shifts, staff):
         if not shifts or not staff:
             raise ValueError("Missing shifts or staff")
 
         group = ScheduleGroup(name="Even Distribution")
 
-        staff_index = 0
-
+        # Group shifts by date
+        shifts_by_date = defaultdict(list)
         for shift in shifts:
-            assigned_staff = staff[staff_index]
-            shift.staff_id = assigned_staff.id
+            shifts_by_date[shift.start_time.date()].append(shift)
 
-            new_schedule = Schedule(
-                name=f"Shift-{shift.id}",
-                created_by=1
-            )
-            new_schedule.shifts.append(shift)
-            group.add_schedule(new_schedule)
-
-            staff_index = (staff_index + 1) % len(staff)
+        # Assign staff evenly within each day
+        for day, day_shifts in shifts_by_date.items():
+            schedule = Schedule(name=f"Schedule {day}", created_by=1)
+            for i, shift in enumerate(day_shifts):
+                assigned_staff = staff[i % len(staff)]
+                shift.staff_id = assigned_staff.id
+                schedule.shifts.append(shift)
+            group.add_schedule(schedule)
 
         return group

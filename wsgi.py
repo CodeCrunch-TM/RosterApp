@@ -395,5 +395,14 @@ def factory_tests_command(type):
         sys.exit(pytest.main(["App/tests/test_factories.py", "-m", "unit"]))
     else:
         sys.exit(pytest.main(["App/tests/test_factories.py"]))
+        
+@test.command("strategies", help="Run scheduling strategy unit tests (pure Python, no DB)")
+@click.argument("type", default="all")
+def strategy_tests_command(type):
+    """Run tests for scheduling strategies (EvenDistribution, MinimizeDayScheduling, DayNightBalanced)."""
+    if type == "unit":
+        sys.exit(pytest.main(["App/tests/test_strategies.py", "-m", "unit"]))
+    else:
+        sys.exit(pytest.main(["App/tests/test_strategies.py"]))
 
 app.cli.add_command(test)
