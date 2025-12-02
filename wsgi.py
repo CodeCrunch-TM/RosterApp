@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from flask_jwt_extended import decode_token, verify_jwt_in_request, get_jwt_identity
 
 from App.database import db, get_migrate
-from App.models import User
+from App.models import User, Schedule
 from App.main import create_app 
 from App.controllers import (
     create_user, get_all_users_json, get_user, get_all_users, initialize,
@@ -127,7 +127,21 @@ def schedule_shift_command(staff_id, schedule_id, start, end):
     admin = require_admin_login()
     start_time = datetime.fromisoformat(start)
     end_time = datetime.fromisoformat(end)
-    shift = schedule_shift(admin.id, staff_id, schedule_id, start_time, end_time)
+    
+    from App.controllers.user import get_user  # make sure you import
+
+    staff = get_user(staff_id)
+    if not staff:
+        print(f"⚠️ No user found with ID {staff_id}")
+        return
+    if staff.role != "staff":
+        print(f"⚠️ User {staff.username} is not staff (role={staff.role})")
+        return
+    
+    
+    schedule = db.session.get(Schedule, schedule_id)
+    
+    shift = schedule_shift(admin.id, staff, schedule, start_time, end_time)
     print(f"✅ Shift scheduled under Schedule {schedule_id} by {admin.username}:")
     print(shift.get_json())
 
