@@ -337,18 +337,63 @@ def mark_notification_command(notification_id):
 app.cli.add_command(notification_cli)
 
 
-
-#Testing Commands
+# Testing Commands
 test = AppGroup('test', help='Testing commands') 
 
 @test.command("user", help="Run User tests")
 @click.argument("type", default="all")
 def user_tests_command(type):
+    """Run tests for Users (unit + integration)."""
     if type == "unit":
-        sys.exit(pytest.main(["-k", "UserUnitTests"]))
+        # Run only unit tests in test_user.py
+        sys.exit(pytest.main(["App/tests/test_user.py", "-m", "unit"]))
     elif type == "int":
-        sys.exit(pytest.main(["-k", "UserIntegrationTests"]))
+        # Run only integration tests in test_user.py
+        sys.exit(pytest.main(["App/tests/test_user.py", "-m", "integration"]))
     else:
-        sys.exit(pytest.main(["-k", "App"]))
-    
+        # Run all user-related tests
+        sys.exit(pytest.main(["App/tests/test_user.py"]))
+
+@test.command("staff", help="Run Staff tests")
+@click.argument("type", default="all")
+def staff_tests_command(type):
+    """Run tests for Staff (unit + integration)."""
+    if type == "unit":
+        sys.exit(pytest.main(["App/tests/test_staff.py", "-m", "unit"]))
+    elif type == "int":
+        sys.exit(pytest.main(["App/tests/test_staff.py", "-m", "integration"]))
+    else:
+        sys.exit(pytest.main(["App/tests/test_staff.py"]))
+
+@test.command("admin", help="Run Admin tests")
+@click.argument("type", default="all")
+def admin_tests_command(type):
+    """Run tests for Admin (unit + integration)."""
+    if type == "unit":
+        sys.exit(pytest.main(["App/tests/test_admin.py", "-m", "unit"]))
+    elif type == "int":
+        sys.exit(pytest.main(["App/tests/test_admin.py", "-m", "integration"]))
+    else:
+        sys.exit(pytest.main(["App/tests/test_admin.py"]))
+
+@test.command("notifications", help="Run Notification tests")
+@click.argument("type", default="all")
+def notification_tests_command(type):
+    """Run tests for Notifications (unit + API)."""
+    if type == "unit":
+        sys.exit(pytest.main(["App/tests/test_notifications.py", "-m", "unit"]))
+    elif type == "api":
+        sys.exit(pytest.main(["App/tests/test_notifications.py", "-m", "api"]))
+    else:
+        sys.exit(pytest.main(["App/tests/test_notifications.py"]))
+        
+@test.command("factories", help="Run Factory tests")
+@click.argument("type", default="all")
+def factory_tests_command(type):
+    """Run tests for Roster Factories."""
+    if type == "unit":
+        sys.exit(pytest.main(["App/tests/test_factories.py", "-m", "unit"]))
+    else:
+        sys.exit(pytest.main(["App/tests/test_factories.py"]))
+
 app.cli.add_command(test)

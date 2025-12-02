@@ -4,3 +4,5 @@ from App.models.staff import Staff
 from App.models.schedule import Schedule
 from App.models.shift import Shift 
 from App.models.ScheduleGroup import ScheduleGroup
+from .notification import Notification
+

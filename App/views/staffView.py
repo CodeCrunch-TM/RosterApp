@@ -1,6 +1,7 @@
 # app/views/staff_views.py
 from flask import Blueprint, jsonify, request
-from App.controllers import staff, auth
+from App.controllers import staff
+from App.controllers.notification import get_user_notifications, mark_as_read
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -11,8 +12,8 @@ staff_views = Blueprint('staff_views', __name__, template_folder='../templates')
 # 2. Clock in 
 # 3. Clock out
 # 4. View specific shift details
-
-staff_views = Blueprint('staff_views', __name__, template_folder='../templates')
+# 5. View notifications
+# 6. Mark notification as read
 
 # Staff view roster route
 @staff_views.route('/staff/roster', methods=['GET'])
@@ -42,7 +43,7 @@ def view_shift():
 # Staff Clock in endpoint
 @staff_views.route('/staff/clock_in', methods=['POST'])
 @jwt_required()
-def clockIn():
+def clock_in():
     try:
         staff_id = int(get_jwt_identity())# db uses int for userID so we must convert
         data = request.get_json()
@@ -67,5 +68,31 @@ def clock_out():
         return jsonify(shift.get_json()), 200
     except (PermissionError, ValueError) as e:
         return jsonify({"error": str(e)}), 403
+    except SQLAlchemyError:
+        return jsonify({"error": "Database error"}), 500
+    
+# Staff view notifications route
+@staff_views.route('/staff/notifications', methods=['GET'])
+@jwt_required()
+def staff_view_notifications():
+    try:
+        staff_id = int(get_jwt_identity())
+        notifications = get_user_notifications(staff_id)
+        return jsonify([n.get_json() for n in notifications]), 200
+    except SQLAlchemyError:
+        return jsonify({"error": "Database error"}), 500
+    
+# Staff mark notification as read route
+@staff_views.route('/staff/notifications/<int:notification_id>/read', methods=['POST'])
+@jwt_required()
+def staff_mark_notification_read(notification_id):
+    try:
+        staff_id = int(get_jwt_identity())
+        notification = mark_as_read(notification_id)
+
+        if not notification or notification.receiver_id != staff_id:
+            return jsonify({"error": "Invalid notification"}), 403
+
+        return jsonify(notification.get_json()), 200
     except SQLAlchemyError:
         return jsonify({"error": "Database error"}), 500

@@ -3,13 +3,6 @@ from App.controllers.user import get_user
 from App.database import db
 from datetime import datetime
 
-from App.models import Schedule, Shift
-from App.models.strategies import (
-    EvenDistributionStrategy,
-    MinimizeDaySchedulingStrategy,
-    DayNightBalancedScheduling
-)
-
 def create_schedule(admin_id, schedule_name):
     admin = get_user(admin_id)
 
@@ -61,43 +54,3 @@ def get_shift_report(admin_id):
 
     shifts = Shift.query.order_by(Shift.start_time).all()
     return [shift.get_json() for shift in shifts]
-
-
-# Auto-populate schedule using a given strategy
-def auto_populate_schedule(admin_id, schedule_group_id, shifts, strategy_name="even"):
-
-    admin = get_user(admin_id)
-    if not admin or admin.role != "admin":
-        raise PermissionError("Only admins can auto-populate schedules")
-
-    # Fetch staff list
-    from App.models import Staff
-    staff = Staff.query.all()
-    if not staff:
-        raise ValueError("No staff members available")
-
-    # Strategy lookup
-    strategies = {
-        "even": EvenDistributionStrategy(),
-        "minimize_days": MinimizeDaySchedulingStrategy(),
-        "day_night": DayNightBalancedScheduling()
-    }
-
-    strategy = strategies.get(strategy_name)
-    if not strategy:
-        raise ValueError(f"Unknown strategy: {strategy_name}")
-
-    # Generate schedule using strategy
-    schedule_group = strategy.generateSchedule(shifts, staff)
-    schedule_group.id = schedule_group_id
-
-    db.session.add(schedule_group)
-    db.session.commit()
-
-    # Observer pattern: notify staff of new assignment
-    for staff_member in staff:
-        schedule_group.attach(staff_member)
-
-    schedule_group.notifyObservers()
-
-    return schedule_group
