@@ -1,24 +1,32 @@
 import click, pytest, sys, os
 from flask.cli import with_appcontext, AppGroup
-from datetime import datetime
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from datetime import datetime, timedelta
+from flask_jwt_extended import decode_token, verify_jwt_in_request, get_jwt_identity
 
 from App.database import db, get_migrate
 from App.models import User
 from App.main import create_app 
 from App.controllers import (
-    create_user, get_all_users_json, get_all_users, initialize,
-    schedule_shift, get_combined_roster, clock_in, clock_out, get_shift_report, login,loginCLI
+    create_user, get_all_users_json, get_user, get_all_users, initialize,
+    schedule_shift, get_combined_roster, clock_in, clock_out, get_shift_report,
+    login, loginCLI
 )
 
+#App and Database initialization
 app = create_app()
 migrate = get_migrate(app)
 
+
+
+#Initialize Database
 @app.cli.command("init", help="Creates and initializes the database")
 def init():
     initialize()
     print('database intialized')
 
+
+
+#Authentication CLI commands
 auth_cli = AppGroup('auth', help='Authentication commands')
 
 @auth_cli.command("login", help="Login and get JWT token")
@@ -27,12 +35,12 @@ auth_cli = AppGroup('auth', help='Authentication commands')
 def login_command(username, password):
     result = loginCLI(username, password)
     if result["message"] == "Login successful":
-        token = result["token"]
         with open("active_token.txt", "w") as f:
-            f.write(token)
+            f.write(result["token"])
         print(f"✅ {result['message']}! JWT token saved for CLI use.")
     else:
         print(f"⚠️ {result['message']}")
+
 
 @auth_cli.command("logout", help="Logout a user by username")
 @click.argument("username")
@@ -46,6 +54,8 @@ def logout_command(username):
 app.cli.add_command(auth_cli)
 
 
+
+# User CLI commands
 user_cli = AppGroup('user', help='User object commands') 
 
 @user_cli.command("create", help="Creates a user")
@@ -68,6 +78,43 @@ app.cli.add_command(user_cli)
 
 
 
+# Staff and Admin Authentication Helpers
+def require_admin_login():
+    if not os.path.exists("active_token.txt"):
+        raise PermissionError("No active session. Please login.")
+
+    with open("active_token.txt", "r") as f:
+        token = f.read().strip()
+
+    try:
+        decoded = decode_token(token)
+        user = get_user(decoded["sub"])
+        if not user or user.role != "admin":
+            raise PermissionError("Only an admin can use this command.")
+        return user
+    except Exception as e:
+        raise PermissionError(f"Invalid or expired token. ({e})")
+
+
+def require_staff_login():
+    if not os.path.exists("active_token.txt"):
+        raise PermissionError("No active session. Please login.")
+
+    with open("active_token.txt", "r") as f:
+        token = f.read().strip()
+
+    try:
+        decoded = decode_token(token)
+        user = get_user(decoded["sub"])
+        if not user or user.role != "staff":
+            raise PermissionError("Only staff can use this command.")
+        return user
+    except Exception as e:
+        raise PermissionError(f"Invalid or expired token. ({e})")
+
+
+
+# Shift CLI commands
 shift_cli = AppGroup('shift', help='Shift management commands')
 
 @shift_cli.command("schedule", help="Admin schedules a shift and assigns it to a schedule")
@@ -75,16 +122,14 @@ shift_cli = AppGroup('shift', help='Shift management commands')
 @click.argument("schedule_id", type=int)
 @click.argument("start")
 @click.argument("end")
+
 def schedule_shift_command(staff_id, schedule_id, start, end):
-    from datetime import datetime
     admin = require_admin_login()
     start_time = datetime.fromisoformat(start)
     end_time = datetime.fromisoformat(end)
     shift = schedule_shift(admin.id, staff_id, schedule_id, start_time, end_time)
     print(f"✅ Shift scheduled under Schedule {schedule_id} by {admin.username}:")
     print(shift.get_json())
-
-
 
 @shift_cli.command("roster", help="Staff views combined roster")
 def roster_command():
@@ -99,8 +144,8 @@ def roster_command():
 def clockin_command(shift_id):
     staff = require_staff_login()
     shift = clock_in(staff.id, shift_id)
-    print(f"🕒 {staff.username} clocked in: {shift.get_json()}")
-
+    print(f"🕒 {staff.username} clocked in:")
+    print(shift.get_json())
 
 
 @shift_cli.command("clockout", help="Staff clocks out")
@@ -108,7 +153,8 @@ def clockin_command(shift_id):
 def clockout_command(shift_id):
     staff = require_staff_login()
     shift = clock_out(staff.id, shift_id)
-    print(f"🕕 {staff.username} clocked out: {shift.get_json()}")
+    print(f"🕕 {staff.username} clocked out:")
+    print(shift.get_json())
 
 
 @shift_cli.command("report", help="Admin views shift report")
@@ -121,48 +167,8 @@ def report_command():
 app.cli.add_command(shift_cli)
 
 
-def require_admin_login():
-    import os
-    from flask_jwt_extended import decode_token
-    from App.controllers import get_user
 
-    if not os.path.exists("active_token.txt"):
-        raise PermissionError("⚠️ No active session. Please login first.")
-
-    with open("active_token.txt", "r") as f:
-        token = f.read().strip()
-
-    try:
-        decoded = decode_token(token)
-        user_id = decoded["sub"]
-        user = get_user(user_id)
-        if not user or user.role != "admin":
-            raise PermissionError("🚫 Only an admin can use this command.")
-        return user
-    except Exception as e:
-        raise PermissionError(f"Invalid or expired token. Please login again. ({e})")
-
-def require_staff_login():
-    import os
-    from flask_jwt_extended import decode_token
-    from App.controllers import get_user
-
-    if not os.path.exists("active_token.txt"):
-        raise PermissionError("⚠️ No active session. Please login first.")
-
-    with open("active_token.txt", "r") as f:
-        token = f.read().strip()
-
-    try:
-        decoded = decode_token(token)
-        user_id = decoded["sub"]
-        user = get_user(user_id)
-        if not user or user.role != "staff":
-            raise PermissionError("🚫 Only staff can use this command.")
-        return user
-    except Exception as e:
-        raise PermissionError(f"Invalid or expired token. Please login again. ({e})")
-
+# Schedule CLI commands
 schedule_cli = AppGroup('schedule', help='Schedule management commands')
 
 @schedule_cli.command("create", help="Create a schedule")
@@ -170,16 +176,20 @@ schedule_cli = AppGroup('schedule', help='Schedule management commands')
 def create_schedule_command(name):
     from App.models import Schedule
     admin = require_admin_login()
+    
     schedule = Schedule(name=name, created_by=admin.id)
     db.session.add(schedule)
     db.session.commit()
-    print(f"✅ Schedule created: {schedule.get_json()}")
+    
+    print(f"✅ Schedule created:")
+    print(schedule.get_json())
 
 
 @schedule_cli.command("list", help="List all schedules")
 def list_schedules_command():
     from App.models import Schedule
     admin = require_admin_login()
+    
     schedules = Schedule.query.all()
     print(f"✅ Found {len(schedules)} schedule(s):")
     for s in schedules:
@@ -191,6 +201,7 @@ def list_schedules_command():
 def view_schedule_command(schedule_id):
     from App.models import Schedule
     admin = require_admin_login()
+    
     schedule = db.session.get(Schedule, schedule_id)
     if not schedule:
         print("⚠️ Schedule not found.")
@@ -198,10 +209,122 @@ def view_schedule_command(schedule_id):
         print(f"✅ Viewing schedule {schedule_id}:")
         print(schedule.get_json())
 
+
+
+#Auto Populate Schedule Command
+@schedule_cli.command("autopopulate", help="Auto-populate schedule with strategy")
+@click.argument("schedule_group_id", type=int)
+@click.argument("strategy", type=click.Choice(["even", "minimize_days", "day_night"]))
+@click.option("--start-date", required=True)
+@click.option("--end-date", required=True)
+@click.option("--shift-duration", default=8)
+def autopopulate_command(schedule_group_id, strategy, start_date, end_date, shift_duration):
+
+    from App.models import Shift
+    from App.controllers.admin import auto_populate_schedule
+
+    admin = require_admin_login()
+
+    start = datetime.fromisoformat(start_date)
+    end = datetime.fromisoformat(end_date)
+
+    shifts = []
+    current = start
+
+    while current < end:
+        for hour in [6, 14, 22]:  # Morning, Afternoon, Night
+            shift_start = current.replace(hour=hour, minute=0, second=0)
+            shift_end = shift_start + timedelta(hours=shift_duration)
+
+            if shift_end <= end:
+                shifts.append(Shift(start_time=shift_start, end_time=shift_end))
+
+        current += timedelta(days=1)
+
+    schedule_group = auto_populate_schedule(admin.id, schedule_group_id, shifts, strategy)
+
+    print(f"✅ Auto-populated schedule using '{strategy}' strategy:")
+    print(schedule_group.get_json())
+
 app.cli.add_command(schedule_cli)
-'''
-Test Commands
-'''
+
+
+
+#Notification CLI commands
+notification_cli = AppGroup('notification', help='Notification commands')
+
+@notification_cli.command("list", help="View your notifications")
+def list_notifications_command():
+    # View all notifications for the logged-in user.
+    from App.controllers.notification import get_user_notifications
+
+    if not os.path.exists("active_token.txt"):
+        print("No active session. Please login first.")
+        return
+
+    with open("active_token.txt", "r") as f:
+        token = f.read().strip()
+
+    try:
+        decoded = decode_token(token)
+        user_id = int(decoded["sub"])
+
+        user_notifications = get_user_notifications(user_id)
+
+        if not user_notifications:
+            print("📭 No notifications.")
+            return
+
+        print(f"📬 You have {len(user_notifications)} notification(s):")
+        for n in user_notifications:
+            status = "✅ Read" if getattr(n, "read", False) else "• Unread"
+            timestamp = getattr(n, "timestamp", "Unknown time")
+            print(f"  [{timestamp}] ({status}) {n.contents}")
+
+    except Exception as e:
+        print(f"❌ Error reading notifications: {e}")
+
+
+@notification_cli.command("clear", help="Clear all notifications for your account")
+def clear_notifications_command():
+    # Delete all notifications for the logged-in user.
+    from App.controllers.notification import clear_notifications
+
+    if not os.path.exists("active_token.txt"):
+        print("No active session. Please login first.")
+        return
+
+    with open("active_token.txt", "r") as f:
+        token = f.read().strip()
+
+    try:
+        decoded = decode_token(token)
+        user_id = int(decoded["sub"])
+
+        clear_notifications(user_id)
+        print("🗑️ All notifications cleared.")
+
+    except Exception as e:
+        print(f"❌ Error clearing notifications: {e}")
+
+
+@notification_cli.command("mark", help="Mark a notification as read")
+@click.argument("notification_id", type=int)
+def mark_notification_command(notification_id):
+    # Mark a specific notification as read
+    from App.controllers.notification import mark_as_read
+
+    notif = mark_as_read(notification_id)
+    if notif:
+        print(f"📘 Notification {notification_id} marked as read.")
+    else:
+        print("⚠️ Notification not found.")
+
+app.cli.add_command(notification_cli)
+
+
+
+#Testing Commands
 test = AppGroup('test', help='Testing commands') 
 
 @test.command("user", help="Run User tests")

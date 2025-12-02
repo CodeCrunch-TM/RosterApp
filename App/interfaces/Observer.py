@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
-class Observer(ABC):
+class Observer:
     
     @abstractmethod
-    def update(self, ObservableRoster):
-        pass
+    def update(self, observable):
+        raise NotImplementedError("Subclasses must implement update()")
