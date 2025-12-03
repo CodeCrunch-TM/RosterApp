@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block title %}Autopopulated Rosters{% endblock %}
+{%block content %}
+<h3>Schedule:</h3>
+
+
+{% if group %}
+  <h3>Generated Schedule</h3>
+  <table border="1">
+    <tr><th>Shift ID</th><th>Start</th><th>End</th><th>Staff</th></tr>
+    {% for schedule in schedules.schedules %}
+      {% for shift in schedule.shifts %}
+        <tr>
+          <td>{{ shift.id }}</td>
+          <td>{{ shift.start_time.strftime("%Y-%m-%d %H:%M") }}</td>
+          <td>{{ shift.end_time.strftime("%Y-%m-%d %H:%M") }}</td>
+          <td>
+            {# Lookup staff name by staff_id #}
+            {% for s in staff_list %}
+              {% if s.id == shift.staff_id %}
+                {{ s.name }}
+              {% endif %}
+            {% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    {% endfor %}
+  </table>
+{% endif %}
+{% endblock %}

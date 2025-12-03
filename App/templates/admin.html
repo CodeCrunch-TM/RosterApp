@@ -24,4 +24,13 @@
     <form method="GET" action="/createNewUser">
             <button type="submit" >Create Account</button>
     </form>
+    <form method="POST">
+        <label for="strategy">Choose scheduling strategy:</label>
+        <select name="strategy" id="strategy">
+                <option value="even">Even Distribution</option>
+                <option value="minimal">Minimal Days</option>
+                <option value="balanced">Day/Night Balanced</option>
+        </select>
+        <button type="submit">Generate Schedule</button>
+    </form>
 {% endblock %}

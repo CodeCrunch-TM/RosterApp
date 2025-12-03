@@ -5,8 +5,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from App.controllers import admin as adminController
 from App.controllers.user import get_user
-from App.models import Schedule, User
+from App.models import Schedule, User, Staff, Shift
 from App.database import db
+from App.models.Strategies import EvenDistributionStrategy, MinimizeDaySchedulingStrategy, DayNightBalancedScheduling
+from App.controllers.schedule_processor import autopopulate
 
 
 admin_view = Blueprint('admin_view', __name__)
@@ -119,3 +121,30 @@ def shiftReport():
         return jsonify({"error": str(e)}), 403
     except SQLAlchemyError:
         return jsonify({"error": "Database error"}), 500
+    
+@admin_view.route('/autopopulate', methods=['GET', 'POST'])
+@jwt_required()
+def autopopulate():
+    staff = Staff.query.all()
+    shifts = Shift.query.order_by(Shift.start_time).all()
+    schedules = None #making sure to reset every time
+    
+    if request.method=='POST':
+        strategy_chosen=request.form.get("strategy")
+        if strategy_chosen=="even":
+            strategy = EvenDistributionStrategy()
+        elif strategy_chosen=="minimal":
+            strategy = MinimizeDaySchedulingStrategy()
+        elif strategy_chosen=="day/night":
+            strategy = DayNightBalancedScheduling()
+        else:
+            strategy = EvenDistributionStrategy() #brute force fallback if none selected or auto-select, however we wanna implement it
+        
+        schedules = strategy.generateSchedule(shifts, staff)
+        for s in schedules.schedules:
+            for shift in s.shifts:
+                temp = Shift.query.get(shift.id)
+                temp.staff_id = shift.staff_id #need to make sure this works, pending testing
+        db.session.commit()
+    return render_template("roster.html", schedules = schedules, staff = staff)
+            
