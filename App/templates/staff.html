@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block title %}Roster App{% endblock %}
+{% block page %}Roster App{% endblock %}
+
+{{ super() }}
+
+{% block content %}
+    <h2>Login</h2>
+    <form method="POST" action="/api/login">
+            <button type="submit" >Schedule View</button>
+    </form>
+    <form method="POST" action="/staff/clock_in">
+            <button type="submit" >Clock In</button>
+    </form>
+    <form method="POST" action="/staff/clock_out">
+            <button type="submit" >Clock Out</button>
+    </form>
+{% endblock %}

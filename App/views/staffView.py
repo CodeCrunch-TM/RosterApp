@@ -1,5 +1,5 @@
 # app/views/staff_views.py
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, render_template
 from App.controllers import staff
 from App.controllers.notification import get_user_notifications, mark_as_read
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -14,6 +14,12 @@ staff_views = Blueprint('staff_views', __name__, template_folder='../templates')
 # 4. View specific shift details
 # 5. View notifications
 # 6. Mark notification as read
+
+#Home Screen for staff
+@staff_views.route('/staff', methods=['GET'])
+@jwt_required()
+def get_staff_page():
+    return render_template("staff.html")
 
 # Staff view roster route
 @staff_views.route('/staff/roster', methods=['GET'])
@@ -46,7 +52,10 @@ def view_shift():
 def clock_in():
     try:
         staff_id = int(get_jwt_identity())# db uses int for userID so we must convert
-        data = request.get_json()
+        try:
+            data = request.get_json()
+        except:
+            data = request.form #for use with template
         shift_id = data.get("shiftID")  # gets the shiftID from the request
         shiftOBJ = staff.clock_in(staff_id, shift_id)  # Call controller
         return jsonify(shiftOBJ.get_json()), 200

@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, render_template
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import SQLAlchemyError
@@ -10,6 +10,13 @@ from App.database import db
 
 
 admin_view = Blueprint('admin_view', __name__)
+
+
+#Home Screen for admin
+@admin_view.route('/admin', methods=['GET'])
+@jwt_required()
+def get_admin_page():
+    return render_template("admin.html")
 
 @admin_view.route('/createSchedule', methods=['POST'])
 @jwt_required()
