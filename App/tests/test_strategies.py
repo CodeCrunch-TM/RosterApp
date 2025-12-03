@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, timedelta
 from App.models import Shift, Staff, ScheduleGroup
-from App.models.strategies import (
+from App.models.Strategies import (
     EvenDistributionStrategy,
     MinimizeDaySchedulingStrategy,
     DayNightBalancedScheduling

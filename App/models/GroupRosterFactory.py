@@ -3,9 +3,9 @@ from App.interfaces.RosterFactory import RosterFactory
 from App.models.SingleRosterFactory import SingleRosterFactory
 from App.models.ScheduleGroup import ScheduleGroup
 from App.models.schedule import Schedule
-from App.models.strategies.EvenDistributionStrategy import EvenDistributionStrategy
-from App.models.strategies.DayNightBalancedScheduling import DayNightBalancedScheduling
-from App.models.strategies.MinimizeDaySchedulingStrategy import MinimizeDaySchedulingStrategy
+from App.models.Strategies.EvenDistributionStrategy import EvenDistributionStrategy
+from App.models.Strategies.DayNightBalancedScheduling import DayNightBalancedScheduling
+from App.models.Strategies.MinimizeDaySchedulingStrategy import MinimizeDaySchedulingStrategy
 
 
 class GroupRosterFactory(RosterFactory): #class diagram might need updating
