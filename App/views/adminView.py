@@ -91,8 +91,8 @@ def createShift():
         #    start_time = datetime.fromisoformat(startTime)
         #    end_time = datetime.fromisoformat(endTime)
         #except ValueError:
-        start_time = datetime.strptime(startTime, "%Y-%m-%dT%H:%M")
-        end_time = datetime.strptime(endTime, "%Y-%m-%dT%H:%M")
+        start_time = datetime.strptime(startTime, "%Y-%m-%d %H:%M:%S")
+        end_time = datetime.strptime(endTime, "%Y-%m-%d %H:%M:%S")
 
         staff = get_user(staff_id)
         schedule = db.session.get(Schedule, schedule_id)
