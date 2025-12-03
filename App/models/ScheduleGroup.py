@@ -14,6 +14,10 @@ class ScheduleGroup(db.Model): #had some tweaks since we decided on the notifica
     def __init__(self, name: Optional[str] = None) -> None:
         self.name = name
         self._observers: List = []
+        
+    @property
+    def observers(self) -> List:
+        return self._observers
 
     def attach(self, observer) -> None:
         if observer not in self._observers:
@@ -35,27 +39,29 @@ class ScheduleGroup(db.Model): #had some tweaks since we decided on the notifica
 
     def add_schedule(self, schedule: Schedule) -> None:
         self.schedules.append(schedule)
+        self._send_notifications()
 
     def remove_schedule(self, schedule_id: int) -> bool:
         for s in list(self.schedules):
             if getattr(s, "id", None) == schedule_id:
                 self.schedules.remove(s)
+                self._send_notifications()
                 return True
         return False
 
     def _send_notifications(self) -> None:
-        if not self.id:  # skip if not persisted yet
+        if not self.id:
             return
-        
+
         staff_ids = set()
         for schedule in self.schedules:
             for shift in schedule.shifts:
                 if shift.staff_id:
                     staff_ids.add(shift.staff_id)
-        
+
         group_name = self.name or f"Schedule Group #{self.id}"
         message = f"Schedule update: {group_name} has been modified"
-        
+
         for staff_id in staff_ids:
             notification = Notification(
                 receiver_id=staff_id,
