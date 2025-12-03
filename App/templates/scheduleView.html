@@ -1,0 +1,206 @@
+{% extends "layout.html" %}
+{% block title %}Schedule View{% endblock %}
+{% block page %}Schedule View{% endblock %}
+{{ super() }}
+{% block content %}
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        select {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #9c27b0;
+            box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.1);
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #9c27b0;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        button:hover {
+            background-color: #7b1fa2;
+        }
+
+        .schedule-section {
+            margin-top: 30px;
+        }
+
+        .schedule-header {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .schedule-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        thead {
+            background-color: #9c27b0;
+            color: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .no-shifts {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .badge-warning {
+            background-color: #ff9800;
+            color: white;
+        }
+    </style>
+
+    <div class="container">
+        <h2>Schedule View</h2>
+        
+        <form method="GET" action="/viewSchedule">
+            <div class="form-group">
+                <label for="schedule_id">Select a Schedule:</label>
+                <select name="schedule_id" id="schedule_id" required>
+                    <option value="">-- Select a Schedule --</option>
+                    {% for schedule in schedules %}
+                        <option value="{{ schedule.id }}" 
+                                {% if selected_schedule_id and selected_schedule_id == schedule.id %}selected{% endif %}>
+                            {{ schedule.name }} ({{ schedule.shifts|length }} shifts)
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit">View Shifts</button>
+            </div>
+        </form>
+
+        <div class="schedule-section">
+            {% if selected_schedule_id %}
+                {# Show only the selected schedule #}
+                {% for schedule in schedules %}
+                    {% if schedule.id == selected_schedule_id %}
+                        <div class="schedule-header">
+                            <h3>{{ schedule.name }}</h3>
+                            <p>Created: {{ schedule.created_at.strftime('%B %d, %Y at %I:%M %p') if schedule.created_at else 'N/A' }}</p>
+                            <p>Total Shifts: {{ schedule.shifts|length }}</p>
+                        </div>
+
+                        {% if schedule.shifts %}
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Staff Name</th>
+                                        <th>Staff ID</th>
+                                        <th>Start Time</th>
+                                        <th>End Time</th>
+                                        <th>Clock In</th>
+                                        <th>Clock Out</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for shift in schedule.shifts %}
+                                        <tr>
+                                            <td>{{ shift.staff.username if shift.staff else 'Unknown' }}</td>
+                                            <td>{{ shift.staff_id }}</td>
+                                            <td>{{ shift.start_time.strftime('%b %d, %Y %I:%M %p') }}</td>
+                                            <td>{{ shift.end_time.strftime('%b %d, %Y %I:%M %p') }}</td>
+                                            <td>{{ shift.clock_in.strftime('%I:%M %p') if shift.clock_in else 'Not clocked in' }}</td>
+                                            <td>{{ shift.clock_out.strftime('%I:%M %p') if shift.clock_out else 'Not clocked out' }}</td>
+                                            <td>
+                                                {% if shift.clock_in and shift.clock_out %}
+                                                    <span class="badge badge-success">Completed</span>
+                                                {% elif shift.clock_in %}
+                                                    <span class="badge badge-warning">In Progress</span>
+                                                {% else %}
+                                                    <span class="badge">Scheduled</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="no-shifts">No shifts scheduled for this schedule</div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="no-shifts">Please select a schedule to view shifts</div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}Roster App{% endblock %}
+{% block page %}Roster App{% endblock %}
+
+{{ super() }}
+
+{% block content %}
+    <h2>Login</h2>
+    <form method="" action="">
+            <button type="submit" >Shift Report</button>
+    </form>
+    <form method="GET" action="/users">
+            <button type="submit" >User List</button>
+    </form>
+    <form method="GET" action="/scheduleShift">
+            <button type="submit" >Schedule Shift</button>
+    </form>
+    <form method="" action="/viewSchedule">
+            <button type="submit" >Schedule View</button>
+    </form>
+    <form method="GET" action="/createNewSchedule">
+            <button type="submit" >Create Schedule</button>
+    </form>
+    <form method="GET" action="/createNewUser">
+            <button type="submit" >Create Account</button>
+    </form>
+{% endblock %}

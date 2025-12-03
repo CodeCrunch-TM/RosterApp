@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, jsonify, request, flash, send_from_directory, flash, redirect, url_for
 from flask_jwt_extended import jwt_required, current_user, unset_jwt_cookies, set_access_cookies
-
+from App.database import db
+from App.models import *
 
 from.index import index_views
 
@@ -47,15 +48,32 @@ def logout_action():
 API Routes
 '''
 
+@auth_views.route('/api/login', methods=['GET'])
+def get_login_page():
+    return render_template("login.html")
+
 @auth_views.route('/api/login', methods=['POST'])
 def user_login_api():
-  data = request.json
-  token = login(data['username'], data['password'])
-  if not token:
-    return jsonify(message='bad username or password given'), 401
-  response = jsonify(access_token=token) 
-  set_access_cookies(response, token)
-  return response
+    try:
+        data = request.json
+    except:
+        data = request.form
+    token = login(data['username'], data['password'])
+    if not token:
+        return jsonify(message='bad username or password given'), 401
+    if not request.is_json:
+        user = User.query.filter_by(username=data['username']).first()
+        print(user.role)
+        if user.role == "staff": #Checks for admin, redirects accordingly
+            response = redirect(url_for('staff_views.get_staff_page'))
+        else:
+            response = redirect(url_for('admin_view.get_admin_page'))
+        set_access_cookies(response, token)
+        return response
+    
+    response = jsonify(access_token=token) 
+    set_access_cookies(response, token)
+    return response
 
 @auth_views.route('/api/identify', methods=['GET'])
 @jwt_required()
