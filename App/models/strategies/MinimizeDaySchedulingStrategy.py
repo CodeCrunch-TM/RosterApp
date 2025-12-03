@@ -6,7 +6,7 @@ class MinimizeDaySchedulingStrategy(ScheduleStrategy):
 
     def generateSchedule(self, shifts, staff):
         if not shifts or not staff:
-            raise ValueError("Shifts and staff lists cannot be empty")
+            raise ValueError("Missing shifts or staff")
 
         schedule_group = ScheduleGroup(name="Minimal Day Schedule")
 

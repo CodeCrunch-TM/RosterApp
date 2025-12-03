@@ -4,10 +4,12 @@ from App.interfaces.ScheduleStrategy import ScheduleStrategy
 
 class EvenDistributionStrategy(ScheduleStrategy):
 
-    def generateSchedule(self, shifts, staff, schedule_group: ScheduleGroup):
+    def generateSchedule(self, shifts, staff):
         if not shifts or not staff:
             raise ValueError("Missing shifts or staff")
 
+        schedule_group = ScheduleGroup(name="Even Distribution Schedule Group") #had this in the wrong place, now it shouldn't need to pass through
+        
         # Group shifts by date
         shifts_by_date = defaultdict(list)
         for shift in shifts:

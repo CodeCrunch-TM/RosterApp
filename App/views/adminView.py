@@ -127,6 +127,8 @@ def shiftReport():
 def autopopulate():
     staff = Staff.query.all()
     shifts = Shift.query.order_by(Shift.start_time).all()
+    if not shifts or not staff:
+        return render_template("scheduleView.html", error="No shifts or staff available to schedule.")
     schedules = None #making sure to reset every time
     
     if request.method=='POST':
@@ -140,11 +142,11 @@ def autopopulate():
         else:
             strategy = EvenDistributionStrategy() #brute force fallback if none selected or auto-select, however we wanna implement it
         
-        schedules = strategy.generateSchedule(shifts, staff)
-        for s in schedules.schedules:
-            for shift in s.shifts:
-                temp = Shift.query.get(shift.id)
-                temp.staff_id = shift.staff_id #need to make sure this works, pending testing
+        generated = strategy.generateSchedule(shifts, staff)
+        schedules = generated.schedules if hasattr(generated, 'schedules') else [generated]
+        # for s in schedules.schedules:
+        #     for shift in s.shifts:
+        #         temp = Shift.query.get(shift.id)
+        #         temp.staff_id = shift.staff_id #need to make sure this works, pending testing
         db.session.commit()
-    return render_template("roster.html", schedules = schedules, staff = staff)
-            
+    return render_template("scheduleView.html", schedules = schedules, staff = staff)
