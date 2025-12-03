@@ -1,4 +1,4 @@
-import unittest
+import unittest, pytest
 from datetime import datetime, timedelta
 from App.database import db, create_db
 from App.models import User, Schedule
@@ -8,6 +8,7 @@ class AdminTests(unittest.TestCase):
     """Unit + Integration tests for Admin functionality"""
 
     # ---- Unit Tests ----
+    @pytest.mark.unit
     def test_schedule_shift_valid(self):
         admin = create_user("admin1", "adminpass", "admin")
         staff = create_user("staff1", "staffpass", "staff")
@@ -25,6 +26,7 @@ class AdminTests(unittest.TestCase):
         self.assertEqual(shift.end_time, end)
 
     # ---- Integration Tests ----
+    @pytest.mark.integration
     def test_admin_generate_shift_report(self):
         admin = create_user("boss", "boss123", "admin")
         staff = create_user("sam", "sampass", "staff")

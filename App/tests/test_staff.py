@@ -14,6 +14,7 @@ def clean_db():
 class StaffTests(unittest.TestCase):
     """Unit + Integration tests for Staff functionality"""
 
+    @pytest.mark.unit
     def test_get_combined_roster_valid(self):
         staff = create_user("staff3", "pass123", "staff")
         admin = create_user("admin3", "adminpass", "admin")
@@ -29,6 +30,7 @@ class StaffTests(unittest.TestCase):
         self.assertEqual(roster[0]["staff_id"], staff.id)
         self.assertEqual(roster[0]["schedule_id"], schedule.id)
 
+    @pytest.mark.unit
     def test_clock_in_and_out(self):
         admin = create_user("admin_clock", "adminpass", "admin")
         staff = create_user("staff_clock", "staffpass", "staff")
@@ -48,6 +50,7 @@ class StaffTests(unittest.TestCase):
         self.assertIsNotNone(updated_shift.clock_out)
         self.assertLess(updated_shift.clock_in, updated_shift.clock_out)
 
+    @pytest.mark.integration
     def test_roster_integration(self):
         admin = create_user("admin", "adminpass", "admin")
         staff1 = create_user("jane", "janepass", "staff")

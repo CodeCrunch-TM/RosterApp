@@ -15,22 +15,27 @@ class UserTests(unittest.TestCase):
     """Unit and Integration tests for User entity"""
 
     # ---- Unit Tests ----
+    @pytest.mark.unit
     def test_new_user_admin(self):
         user = create_user("bot", "bobpass","admin")
         self.assertEqual(user.username, "bot")
 
+    @pytest.mark.unit
     def test_new_user_staff(self):
         user = create_user("pam", "pampass","staff")
         self.assertEqual(user.username, "pam")
 
+    @pytest.mark.unit
     def test_create_user_invalid_role(self):
         user = create_user("jim", "jimpass","ceo")
         self.assertIsNone(user)
 
+    @pytest.mark.unit
     def test_get_json(self):
         user = User("bob", "bobpass", "admin")
         self.assertDictEqual(user.get_json(), {"id": None, "username":"bob","role":"admin"})
 
+    @pytest.mark.unit
     def test_hashed_password(self):
         password = "mypass"
         user = User("tester", password)
@@ -38,18 +43,21 @@ class UserTests(unittest.TestCase):
         self.assertTrue(user.check_password(password))
 
     # ---- Integration Tests ----
+    @pytest.mark.int
     def test_create_and_get_user(self):
         user = create_user("alex", "alexpass", "staff")
         retrieved = get_user(user.id)
         self.assertEqual(retrieved.username, "alex")
         self.assertEqual(retrieved.role, "staff")
 
+    @pytest.mark.int
     def test_update_user(self):
         user = create_user("bot", "bobpass","admin")
         update_user(user.id, "ronnie")
         user = get_user(user.id)
         self.assertEqual(user.username, "ronnie")
 
+    @pytest.mark.int
     def test_get_all_users_json_integration(self):
         create_user("bot", "bobpass", "admin")
         create_user("pam", "pampass", "staff")
@@ -60,6 +68,7 @@ class UserTests(unittest.TestCase):
         ]
         self.assertEqual(users_json, expected)
 
+    @pytest.mark.int
     def test_authenticate(self):
         user = User("bob", "bobpass","user")
         self.assertIsNotNone(loginCLI("bob", "bobpass"))

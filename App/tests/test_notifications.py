@@ -1,5 +1,7 @@
 import unittest
 from datetime import datetime
+
+import pytest
 from App.main import create_app
 from App.database import db
 from App.models import User, Notification
@@ -31,6 +33,7 @@ class NotificationUnitTests(unittest.TestCase):
             db.create_all()
     
     #Test notification creation
+    @pytest.mark.unit
     def test_create_notification(self):
         with self.app.app_context():
             user = create_user("test_user", "password", "staff")
@@ -42,6 +45,7 @@ class NotificationUnitTests(unittest.TestCase):
             self.assertFalse(notification.read)
     
     #Test retrieving user notifications
+    @pytest.mark.unit
     def test_get_user_notifications(self):
         with self.app.app_context():
             user = create_user("staff1", "password", "staff")
@@ -54,6 +58,7 @@ class NotificationUnitTests(unittest.TestCase):
             self.assertEqual(notifications[0].message, "Message 2")
     
     #Test marking notification as read
+    @pytest.mark.unit
     def test_mark_as_read(self):
         with self.app.app_context():
             user = create_user("staff2", "password", "staff")
@@ -65,6 +70,7 @@ class NotificationUnitTests(unittest.TestCase):
             self.assertTrue(updated.read)
     
     # Test clearing notifications
+    @pytest.mark.unit
     def test_clear_notifications(self):
         with self.app.app_context():
             user = create_user("staff3", "password", "staff")
@@ -77,6 +83,7 @@ class NotificationUnitTests(unittest.TestCase):
             self.assertEqual(len(notifications), 0)
     
     # Test Notification model's to_json method
+    @pytest.mark.unit
     def test_notification_to_json(self):
         with self.app.app_context():
             user = create_user("staff4", "password", "staff")
@@ -113,6 +120,7 @@ class NotificationAPITests(unittest.TestCase):
             self.token = response.json.get('access_token')
     
     #Test GET /api/notifications
+    @pytest.mark.api
     def test_get_notifications_api(self):
         with self.app.app_context():
             create_notification(self.user.id, "API Test 1")
@@ -126,6 +134,7 @@ class NotificationAPITests(unittest.TestCase):
         self.assertEqual(len(data), 2)
     
     #Test POST /api/notifications/<id>/read
+    @pytest.mark.api
     def test_mark_notification_read_api(self):
         with self.app.app_context():
             notification = create_notification(self.user.id, "Read test")
@@ -138,6 +147,7 @@ class NotificationAPITests(unittest.TestCase):
         self.assertTrue(response.json['read'])
     
     #Test that users can't mark other's notifications as read
+    @pytest.mark.api
     def test_mark_notification_unauthorized(self):
         with self.app.app_context():
             other_user = create_user("other_staff", "password", "staff")
