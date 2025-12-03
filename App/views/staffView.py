@@ -4,6 +4,7 @@ from App.controllers import staff
 from App.controllers.notification import get_user_notifications, mark_as_read
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import SQLAlchemyError
+from App.models import Schedule, Shift
 
 staff_views = Blueprint('staff_views', __name__, template_folder='../templates')
 
@@ -20,6 +21,15 @@ staff_views = Blueprint('staff_views', __name__, template_folder='../templates')
 @jwt_required()
 def get_staff_page():
     return render_template("staff.html")
+
+#Route to view Schedule
+@staff_views.route('/viewSchedule', methods=['GET'])
+@jwt_required()
+def view_schedule_page():
+    schedules = Schedule.query.all()
+    selected_schedule_id = request.args.get('schedule_id', type=int)
+    return render_template("scheduleView.html", schedules=schedules, selected_schedule_id=selected_schedule_id)
+
 
 # Staff view roster route
 @staff_views.route('/staff/roster', methods=['GET'])
@@ -56,7 +66,9 @@ def clock_in():
             data = request.get_json()
         except:
             data = request.form #for use with template
-        shift_id = data.get("shiftID")  # gets the shiftID from the request
+        #shift_id = data.get("shiftID")  # gets the shiftID from the request
+        shift = Shift.query.filter_by(staff_id=staff_id).first()
+        shift_id = shift.id
         shiftOBJ = staff.clock_in(staff_id, shift_id)  # Call controller
         return jsonify(shiftOBJ.get_json()), 200
     except (PermissionError, ValueError) as e:
@@ -70,9 +82,14 @@ def clock_in():
 @jwt_required()
 def clock_out():
     try:
-        staff_id = int(get_jwt_identity()) # db uses int for userID so we must convert
-        data = request.get_json()
-        shift_id = data.get("shiftID")  # gets the shiftID from the request
+        staff_id = int(get_jwt_identity())# db uses int for userID so we must convert
+        try:
+            data = request.get_json()
+        except:
+            data = request.form #for use with template
+        #shift_id = data.get("shiftID")  # gets the shiftID from the request
+        shift = Shift.query.filter_by(staff_id=staff_id).first()
+        shift_id = shift.id
         shift = staff.clock_out(staff_id, shift_id)  # Call controller
         return jsonify(shift.get_json()), 200
     except (PermissionError, ValueError) as e:
