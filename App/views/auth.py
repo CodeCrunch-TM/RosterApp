@@ -39,7 +39,8 @@ def login_action():
 
 @auth_views.route('/logout', methods=['GET'])
 def logout_action():
-    response = redirect(request.referrer) 
+    #response = redirect(request.referrer) 
+    response = redirect(url_for('index_views.index_page'))
     flash("Logged Out!")
     unset_jwt_cookies(response)
     return response
@@ -63,7 +64,7 @@ def user_login_api():
         return jsonify(message='bad username or password given'), 401
     if not request.is_json:
         user = User.query.filter_by(username=data['username']).first()
-        print(user.role)
+        #print(user.role)
         if user.role == "staff": #Checks for admin, redirects accordingly
             response = redirect(url_for('staff_views.get_staff_page'))
         else:

@@ -8,7 +8,7 @@ def initialize():
     create_user('bob', 'bobpass', 'admin')
     create_user('jane', 'janepass', 'staff')
     create_user('alice', 'alicepass', 'staff')
-    create_user('tim', 'timpass', 'user')
+    create_user('tim', 'timpass', 'staff')
 
 # db.session.commit()
 

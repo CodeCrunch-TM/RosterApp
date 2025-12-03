@@ -5,32 +5,49 @@
 {{ super() }}
 
 {% block content %}
-    <h2>Login</h2>
-    <form method="" action="">
-            <button type="submit" >Shift Report</button>
-    </form>
-    <form method="GET" action="/users">
-            <button type="submit" >User List</button>
-    </form>
-    <form method="GET" action="/scheduleShift">
-            <button type="submit" >Schedule Shift</button>
-    </form>
-    <form method="" action="/viewSchedule">
-            <button type="submit" >Schedule View</button>
-    </form>
-    <form method="GET" action="/createNewSchedule">
-            <button type="submit" >Create Schedule</button>
-    </form>
-    <form method="GET" action="/createNewUser">
-            <button type="submit" >Create Account</button>
-    </form>
-    <form action="{{url_for('admin_view.autopopulate')}}" method="POST">
+        <h5>Welcome {{ user.username }} </h5>
+        <div class="row">
+                <div class="col s12 m4">
+                <form method="POST" action="/shiftReport">
+                        <button type="submit" class="btn waves-effect waves-light teal btn-large" style="width: 100%;">Shift Report</button>
+                </form>
+                </div>
+                <div class="col s12 m4">
+                <form method="GET" action="/users">
+                        <button type="submit" class="btn waves-effect waves-light teal btn-large" style="width: 100%;">User List</button>
+                </form>
+                </div>
+                <div class="col s12 m4">
+                <form method="GET" action="/scheduleShift">
+                        <button type="submit" class="btn waves-effect waves-light teal btn-large" style="width: 100%;">Schedule Shift</button>
+                </form>
+                </div>
+        </div>
+        
+        <div class="row">
+                <div class="col s12 m4">
+                <form method="GET" action="/viewSchedule">
+                        <button type="submit" class="btn waves-effect waves-light teal btn-large" style="width: 100%;">Schedule View</button>
+                </form>
+                </div>
+                <div class="col s12 m4">
+                <form method="GET" action="/createNewSchedule">
+                        <button type="submit" class="btn waves-effect waves-light teal btn-large" style="width: 100%;">Create Schedule</button>
+                </form>
+                </div>
+                <div class="col s12 m4">
+                <form method="GET" action="/createNewUser">
+                        <button type="submit" class="btn waves-effect waves-light teal btn-large" style="width: 100%;">Create Account</button>
+                </form>
+                </div>
+        </div>
+    <form method="POST" action="/autopopulate">
         <label for="strategy">Choose scheduling strategy:</label>
         <select name="strategy" id="strategy">
                 <option value="even">Even Distribution</option>
                 <option value="minimal">Minimal Days</option>
                 <option value="balanced">Day/Night Balanced</option>
         </select>
-        <button type="submit">Generate Schedule</button>
+        <button type="submit" class="btn waves-effect waves-light">Generate Schedule</button>
     </form>
 {% endblock %}
