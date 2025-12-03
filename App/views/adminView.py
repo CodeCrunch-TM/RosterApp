@@ -143,13 +143,23 @@ def shiftReport():
     except SQLAlchemyError:
         return jsonify({"error": "Database error"}), 500
     
+@admin_view.route('/autopopulate-options', methods=['GET'])
+@jwt_required()
+def autopopulate_options():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    return render_template("autopopulateOptions.html", user=user)
+    
 @admin_view.route('/autopopulate', methods=['GET', 'POST'])
 @jwt_required()
 def autopopulate():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
     staff = Staff.query.all()
     shifts = Shift.query.order_by(Shift.start_time).all()
     if not shifts or not staff:
-        return render_template("scheduleView.html", error="No shifts or staff available to schedule.")
+        return redirect(url_for('admin_view.autopopulate_options'))
     schedules = None #making sure to reset every time
     
     if request.method=='POST':
@@ -165,9 +175,13 @@ def autopopulate():
         
         generated = strategy.generateSchedule(shifts, staff)
         schedules = generated.schedules if hasattr(generated, 'schedules') else [generated]
-        # for s in schedules.schedules:
-        #     for shift in s.shifts:
-        #         temp = Shift.query.get(shift.id)
-        #         temp.staff_id = shift.staff_id #need to make sure this works, pending testing
+        
+        for schedule in schedules:
+            if hasattr(schedule, 'shifts'):
+                for shift in schedule.shifts:
+                    temp = Shift.query.get(shift.id)
+                    if temp:
+                        temp.staff_id = shift.staff_id #actual assignment of shift to staff                
+        db.session.add(generated)
         db.session.commit()
-    return render_template("scheduleView.html", schedules = schedules, staff = staff)
+    return render_template("scheduleView.html", schedules = schedules, staff = staff, user=user)

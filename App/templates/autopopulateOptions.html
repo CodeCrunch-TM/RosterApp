@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block title %}Auto-populate Schedule{% endblock %}
+{% block page %}Auto-populate Schedule{% endblock %}
+{% block content %}
+
+<div class="container" style="margin-top: 40px; max-width: 600px;">
+    <h2>Select Scheduling Strategy</h2>
+    <p>Choose how you want to auto-populate the schedule:</p>
+    
+    <form method="POST" action="/autopopulate">
+        <div class="form-group" style="margin-bottom: 30px;">
+            <label style="display: block; margin-bottom: 15px;">
+                <input type="radio" name="strategy" value="even" checked>
+                <span><strong>Even Distribution</strong></span>
+                <p style="margin: 5px 0 0 24px; font-size: 14px; color: #666;">Distributes shifts evenly across all staff members.</p>
+            </label>
+            
+            <label style="display: block; margin-bottom: 15px; margin-top: 15px;">
+                <input type="radio" name="strategy" value="minimal">
+                <span><strong>Minimize Day Scheduling</strong></span>
+                <p style="margin: 5px 0 0 24px; font-size: 14px; color: #666;">Minimizes the number of days each staff member works.</p>
+            </label>
+            
+            <label style="display: block; margin-top: 15px;">
+                <input type="radio" name="strategy" value="day/night">
+                <span><strong>Day/Night Balanced</strong></span>
+                <p style="margin: 5px 0 0 24px; font-size: 14px; color: #666;">Balances day and night shifts for each staff member.</p>
+            </label>
+        </div>
+        
+        <button type="submit" class="btn purple waves-effect waves-light">Generate Schedule</button>
+        <a href="/admin" class="btn-flat waves-effect" style="margin-left: 10px;">Cancel</a>
+    </form>
+</div>
+
+{% endblock %}
