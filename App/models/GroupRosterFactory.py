@@ -3,12 +3,19 @@ from App.interfaces.RosterFactory import RosterFactory
 from App.models.SingleRosterFactory import SingleRosterFactory
 from App.models.ScheduleGroup import ScheduleGroup
 from App.models.schedule import Schedule
+from App.models.strategies.EvenDistributionStrategy import EvenDistributionStrategy
 
 
 class GroupRosterFactory(RosterFactory): #class diagram might need updating
 
     def __init__(self) -> None:
         self._single = SingleRosterFactory()
+        self._strategies = {
+            "even": EvenDistributionStrategy()
+        }
+        
+    def get_strategy(self, name: str):
+        return self._strategies.get(name)
 
     def createRoster(
         self,

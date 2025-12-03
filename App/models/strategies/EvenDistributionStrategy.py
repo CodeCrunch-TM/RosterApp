@@ -4,11 +4,9 @@ from App.interfaces.ScheduleStrategy import ScheduleStrategy
 
 class EvenDistributionStrategy(ScheduleStrategy):
 
-    def generateSchedule(self, shifts, staff):
+    def generateSchedule(self, shifts, staff, schedule_group: ScheduleGroup):
         if not shifts or not staff:
             raise ValueError("Missing shifts or staff")
-
-        group = ScheduleGroup(name="Even Distribution")
 
         # Group shifts by date
         shifts_by_date = defaultdict(list)
@@ -22,6 +20,6 @@ class EvenDistributionStrategy(ScheduleStrategy):
                 assigned_staff = staff[i % len(staff)]
                 shift.staff_id = assigned_staff.id
                 schedule.shifts.append(shift)
-            group.add_schedule(schedule)
+            schedule_group.add_schedule(schedule)
 
-        return group
+        return schedule_group

@@ -405,4 +405,16 @@ def strategy_tests_command(type):
     else:
         sys.exit(pytest.main(["App/tests/test_strategies.py"]))
 
+@test.command("observer", help="Run Observer pattern integration tests")
+@click.argument("type", default="all")
+def observer_tests_command(type):
+    """Run Observer pattern integration tests (end-to-end)."""
+
+    if type == "integration":
+        sys.exit(pytest.main(["App/tests/test_observer_integration.py", "-m", "unit"]))
+    else:
+        sys.exit(pytest.main(["App/tests/test_observer_integration.py"]))
+
+
+
 app.cli.add_command(test)
