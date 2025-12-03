@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from models import Staff, Shift, Schedule, ScheduleGroup, GroupRosterFactory
-from interfaces import ScheduleStrategy
+from App.models import Staff, Shift, Schedule, ScheduleGroup, GroupRosterFactory
+from App.interfaces import ScheduleStrategy
 
 def create_empty_group():
     return ScheduleGroup()

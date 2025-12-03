@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, flash, redirect, url_for
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import SQLAlchemyError
@@ -18,29 +18,37 @@ admin_view = Blueprint('admin_view', __name__)
 @admin_view.route('/admin', methods=['GET'])
 @jwt_required()
 def get_admin_page():
-    return render_template("admin.html")
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    return redirect(url_for('user_views.get_user_page'))
+    #return render_template("users.html", user=user)
 
 #Route to create a new schedule
 @admin_view.route('/createNewSchedule', methods=['GET'])
 @jwt_required()
 def get_schedule_page():
-    users = User.query.all()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     schedules = Schedule.query.all()
-    return render_template("schedule.html", users=users, schedules=schedules)
+    return render_template("schedule.html", user=user, schedules=schedules)
 
 #Route to create a new account
 @admin_view.route('/createNewUser', methods=['GET'])
 @jwt_required()
 def get_newuser_page():
-    return render_template("newUser.html")
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    return render_template("newUser.html", user=user)
 
 #Route to view Schedule
 @admin_view.route('/viewSchedule', methods=['GET'])
 @jwt_required()
 def view_schedule_page():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     schedules = Schedule.query.all()
     selected_schedule_id = request.args.get('schedule_id', type=int)
-    return render_template("scheduleView.html", schedules=schedules, selected_schedule_id=selected_schedule_id)
+    return render_template("scheduleView.html", user=user, schedules=schedules, selected_schedule_id=selected_schedule_id)
 
 @admin_view.route('/createSchedule', methods=['POST'])
 @jwt_required()
@@ -54,7 +62,13 @@ def createSchedule():
         scheduleName = data.get("scheduleName")
 
         schedule = adminController.create_schedule(admin_id, scheduleName)
-        return jsonify(schedule.get_json()), 200
+        
+        try:
+            flash(f'Schedule {scheduleName} was created')
+            responce = redirect(url_for('admin_view.get_admin_page'))
+            return responce
+        except:
+            return jsonify(schedule.get_json()), 200
 
     except (PermissionError, ValueError) as e:
         return jsonify({"error": str(e)}), 403
@@ -66,9 +80,11 @@ def createSchedule():
 @admin_view.route('/scheduleShift', methods=['GET'])
 @jwt_required()
 def scheduleShift():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     users = User.query.all()
     schedules = Schedule.query.all()
-    return render_template("shift.html", users=users, schedules=schedules)
+    return render_template("shift.html", user=user, users=users, schedules=schedules)
 
 @admin_view.route('/createShift', methods=['POST'])
 @jwt_required()
@@ -89,19 +105,24 @@ def createShift():
             return jsonify({"error": "Missing required fields"}), 400
 
         # Parse time
-        #try:
-        #    start_time = datetime.fromisoformat(startTime)
-        #    end_time = datetime.fromisoformat(endTime)
-        #except ValueError:
-        start_time = datetime.strptime(startTime, "%Y-%m-%d %H:%M:%S")
-        end_time = datetime.strptime(endTime, "%Y-%m-%d %H:%M:%S")
+        try:
+            start_time = datetime.fromisoformat(startTime)
+            end_time = datetime.fromisoformat(endTime)
+        except ValueError:
+            start_time = datetime.strptime(startTime, "%Y-%m-%d %H:%M:%S")
+            end_time = datetime.strptime(endTime, "%Y-%m-%d %H:%M:%S")
 
         staff = get_user(staff_id)
         schedule = db.session.get(Schedule, schedule_id)
 
         shift = adminController.schedule_shift(admin_id, staff, schedule, start_time, end_time)
 
-        return jsonify(shift.get_json()), 200
+        try:
+            flash(f'Shift for {staff.username} was created')
+            responce = redirect(url_for('admin_view.scheduleShift'))
+            return responce
+        except:
+            return jsonify(shift.get_json()), 200
 
     except (PermissionError, ValueError) as e:
         return jsonify({"error": str(e)}), 403

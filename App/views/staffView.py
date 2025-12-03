@@ -4,7 +4,7 @@ from App.controllers import staff
 from App.controllers.notification import get_user_notifications, mark_as_read
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import SQLAlchemyError
-from App.models import Schedule, Shift
+from App.models import Schedule, Shift, User
 
 staff_views = Blueprint('staff_views', __name__, template_folder='../templates')
 
@@ -20,15 +20,19 @@ staff_views = Blueprint('staff_views', __name__, template_folder='../templates')
 @staff_views.route('/staff', methods=['GET'])
 @jwt_required()
 def get_staff_page():
-    return render_template("staff.html")
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    return render_template("staff.html", user=user)
 
 #Route to view Schedule
 @staff_views.route('/viewSchedule', methods=['GET'])
 @jwt_required()
 def view_schedule_page():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     schedules = Schedule.query.all()
     selected_schedule_id = request.args.get('schedule_id', type=int)
-    return render_template("scheduleView.html", schedules=schedules, selected_schedule_id=selected_schedule_id)
+    return render_template("scheduleView.html", user=user, schedules=schedules, selected_schedule_id=selected_schedule_id)
 
 
 # Staff view roster route
@@ -61,6 +65,7 @@ def view_shift():
 @jwt_required()
 def clock_in():
     try:
+        print("CLock")
         staff_id = int(get_jwt_identity())# db uses int for userID so we must convert
         try:
             data = request.get_json()
