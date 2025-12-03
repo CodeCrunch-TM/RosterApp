@@ -22,6 +22,8 @@ def display_staff(schedule, staff):
             end = x.shift.end_time.strftime("%d-%m-%Y $H:%M")
             print(f"[Shift {x.shift.shift_id}]: {start} - {end}") # same code as above just added id checking lmao
             
+
+
 @schedule_views.route('/api/schedule/populate/<int:schedule_id>/<string:strategy>', methods=['PUT'])
 @jwt_required()
 def populate_schedule(schedule_id, strategy):

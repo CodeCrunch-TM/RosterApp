@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block title %}Roster App{% endblock %}
+{% block page %}Roster App{% endblock %}
+
+{{ super() }}
+
+{% block content %}
+    <h2>Schedule Shift</h2>
+    <form method="POST" action="/createShift">
+    <select name="scheduleID" id="scheduleID">
+        <option value="">Select a schedule</option>
+        {% for schedule in schedules %}
+            <option value="{{ schedule.id }}" name="scheduleID" id="scheduleID" >{{ schedule.name }}</option>
+        {% endfor %}
+    </select>
+    <select name="staffID" id="staffID">
+        <option value="">Select a user</option>
+        {% for user in users %}
+            <option value="{{ user.id }}">{{ user.username }}</option>
+        {% endfor %}
+    </select>
+    <div>
+        <label for="start_time">Start Time</label>
+        <input type="datetime-local" name="start_time" id="start_time">
+    </div>
+    </div>
+        <label for="end_time">End Time</label>
+        <input type="datetime-local" name="end_time" id="end_time">
+    </div>
+        <button type="submit" >Create Shift</button>
+    </form>
+{% endblock %}
