@@ -1,0 +1,2585 @@
+{
+	"info": {
+		"_postman_id": "c0eac877-b2db-4d9d-84c9-1de123338aba",
+		"name": "RosterApp API",
+		"description": "**RosterApp** is a lightweight, role-based rostering and clock-in/out system built with Flask (Python). This Postman collection provides a complete set of API endpoints to test and interact with the application during development or deployment.\n\nPresented by **CodeCrunch™**\n\n#### Base URL\n\n- Local development: [http://localhost:8080](http://127.0.0.1:8080)\n    \n\n#### Overview\n\nRosterApp supports two user roles:\n\n- **Admin** – full control (create schedules, assign shifts, manage users)\n    \n- **Staff** – view their own roster, clock in/out, receive notifications\n    \n\nAuthentication is JWT-based (Bearer token returned on successful login).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "42343436",
+		"_collection_link": "https://www.postman.com/science-meteorologist-69454336/workspace/codecrunch-workspace/collection/42343436-c0eac877-b2db-4d9d-84c9-1de123338aba?action=share&source=collection_link&creator=42343436"
+	},
+	"item": [
+		{
+			"name": "Setup & Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									" pm.test(\"Status is 200\", function() {\r",
+									"       pm.response.to.have.status(200);\r",
+									"   });\r",
+									"\r",
+									"   pm.test(\"Response has status field\", function() {\r",
+									"       var jsonData = pm.response.json();\r",
+									"       pm.expect(jsonData).to.have.property('status');\r",
+									"       pm.expect(jsonData.status).to.eql('healthy');\r",
+									"   });"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Health Check",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/health",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"health"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:03:27 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "26"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"healthy\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Initialize Database",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Database initialized\", function() {\r",
+									"       pm.response.to.have.status(200);\r",
+									"       var jsonData = pm.response.json();\r",
+									"       pm.expect(jsonData.message).to.include('initialized');\r",
+									"   });"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/init",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"init"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Initialize Database",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/init",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"init"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:04:05 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "35"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"db initialized!\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Admin Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Login successful\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Access token received\", function() {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property('access_token');\r",
+									"    \r",
+									"    // Save token to environment\r",
+									"    pm.environment.set(\"admin_token\", jsonData.access_token);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": " {\r\n    \"username\": \"{{admin_username}}\",\r\n    \"password\": \"{{admin_password}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"login"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Admin Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": " {\r\n    \"username\": \"{{admin_username}}\",\r\n    \"password\": \"{{admin_password}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/login",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:04:14 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "289"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "access_token={{vault:json-web-token}}; Secure; HttpOnly; Path=/"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"access_token\": \"{{vault:json-web-token}}\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Staff Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"   pm.test(\"Staff login successful\", function() {\r",
+									"       pm.response.to.have.status(200);\r",
+									"       var jsonData = pm.response.json();\r",
+									"       pm.environment.set(\"staff_token\", jsonData.access_token);\r",
+									"   });"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "   {\r\n       \"username\": \"{{staff_username}}\",\r\n       \"password\": \"{{staff_password}}\"\r\n   }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"login"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Staff Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "   {\r\n       \"username\": \"{{staff_username}}\",\r\n       \"password\": \"{{staff_password}}\"\r\n   }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/login",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:04:32 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "289"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "access_token={{vault:json-web-token}}; Secure; HttpOnly; Path=/"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"access_token\": \"{{vault:json-web-token}}\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Identify Current User (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"   pm.test(\"User identified\", function() {\r",
+									"       pm.response.to.have.status(200);\r",
+									"       var jsonData = pm.response.json();\r",
+									"       pm.expect(jsonData.message).to.include('username');\r",
+									"   });"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/identify",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"identify"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Identify Current User (Admin)",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/identify",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"identify"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:04:43 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "42"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"username: jane, id : 2\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Logout Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Admin logout successful\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.message).to.include('Logged Out');\r",
+									"});\r",
+									"\r",
+									"// Clear admin token\r",
+									"pm.environment.unset(\"admin_token\");\r",
+									"console.log(\"✓ Admin token cleared from environment\");"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"logout"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Logout Admin",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/logout",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"logout"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:04:54 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "31"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "access_token=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; Path=/"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "refresh_token_cookie=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; Path=/"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Logged Out!\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Logout Staff",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Staff logout successful\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.message).to.include('Logged Out');\r",
+									"});\r",
+									"\r",
+									"// Clear staff token\r",
+									"pm.environment.unset(\"staff_token\");\r",
+									"console.log(\"✓ Staff token cleared from environment\");"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staff_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{staff_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"logout"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Logout Staff",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{staff_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/logout",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"logout"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:05:18 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "31"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "access_token=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; Path=/"
+								},
+								{
+									"key": "Set-Cookie",
+									"value": "refresh_token_cookie=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; Path=/"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Logged Out!\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "Get All Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Users retrieved\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    var users = pm.response.json();\r",
+									"    pm.expect(users).to.be.an('array');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Get All Users",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/users",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"users"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:05:30 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "265"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 1,\n        \"role\": \"admin\",\n        \"username\": \"bob\"\n    },\n    {\n        \"id\": 2,\n        \"role\": \"staff\",\n        \"username\": \"jane\"\n    },\n    {\n        \"id\": 3,\n        \"role\": \"staff\",\n        \"username\": \"alice\"\n    },\n    {\n        \"id\": 4,\n        \"role\": \"user\",\n        \"username\": \"tim\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Create New User (Staff)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get response code and body\r",
+									"const statusCode = pm.response.code;\r",
+									"let responseText = pm.response.text();\r",
+									"\r",
+									"if (statusCode === 201) {\r",
+									"    pm.test(\"User created\", function() {\r",
+									"        let jsonData;\r",
+									"        try {\r",
+									"            jsonData = pm.response.json();\r",
+									"        } catch (e) {\r",
+									"            pm.expect.fail(\"Response is not valid JSON\");\r",
+									"        }\r",
+									"        pm.expect(jsonData.message || \"\").to.include('created');\r",
+									"    });\r",
+									"} else if (statusCode === 500 && responseText.includes('UNIQUE constraint failed')) {\r",
+									"    pm.test(\"Username already exists\", function() {\r",
+									"        pm.expect(responseText).to.include('UNIQUE constraint failed');\r",
+									"    });\r",
+									"} else {\r",
+									"    pm.test(\"Unexpected error or status code\", function() {\r",
+									"        pm.expect.fail(`Unexpected status code: ${statusCode}\\nResponse: ${responseText}`);\r",
+									"    });\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"newstaff\",\r\n    \"password\": \"staffpass123\",\r\n    \"confirm_password\": \"staffpass123\",\r\n    \"role\": \"staff\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Create New User (Staff)",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"username\": \"newstaff\",\r\n    \"password\": \"staffpass123\",\r\n    \"confirm_password\": \"staffpass123\",\r\n    \"role\": \"staff\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/users",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"users"
+									]
+								}
+							},
+							"status": "CREATED",
+							"code": 201,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:00:22 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "51"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"user newstaff created with id 5\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Create New User (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get response code and body",
+									"const statusCode = pm.response.code;",
+									"let responseText = pm.response.text();",
+									"",
+									"if (statusCode === 201) {",
+									"    pm.test(\"User created\", function() {",
+									"        let jsonData;",
+									"        try {",
+									"            jsonData = pm.response.json();",
+									"        } catch (e) {",
+									"            pm.expect.fail(\"Response is not valid JSON\");",
+									"        }",
+									"        pm.expect(jsonData.message || \"\").to.include('created');",
+									"    });",
+									"} else if (statusCode === 500 && responseText.includes('UNIQUE constraint failed')) {",
+									"    pm.test(\"Username already exists\", function() {",
+									"        pm.expect(responseText).to.include('UNIQUE constraint failed');",
+									"    });",
+									"} else {",
+									"    pm.test(\"Unexpected error or status code\", function() {",
+									"        pm.expect.fail(`Unexpected status code: ${statusCode}\\nResponse: ${responseText}`);",
+									"    });",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"newadmin\",\r\n    \"password\": \"adminpass123\",\r\n    \"confirm_password\": \"adminpass123\",\r\n    \"role\": \"admin\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Create New User (Admin)",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"username\": \"newadmin\",\r\n    \"password\": \"adminpass123\",\r\n    \"confirm_password\": \"adminpass123\",\r\n    \"role\": \"admin\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/users",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"users"
+									]
+								}
+							},
+							"status": "CREATED",
+							"code": 201,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:05:48 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "51"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"user newadmin created with id 5\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Admin - Schedules",
+			"item": [
+				{
+					"name": "Create Schedule",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Schedule created successfully\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Schedule has required fields\", function() {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property('id');\r",
+									"    pm.expect(jsonData).to.have.property('name');\r",
+									"    pm.expect(jsonData).to.have.property('created_by');\r",
+									"    \r",
+									"    // Save schedule_id for later use\r",
+									"    pm.environment.set(\"schedule_id\", jsonData.id);\r",
+									"});\r",
+									"\r",
+									"console.log(\"Schedule created with ID:\", pm.environment.get(\"schedule_id\"));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"scheduleName\": \"Weekly Schedule - Week 1\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/createSchedule",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"createSchedule"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Create Schedule",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"scheduleName\": \"Weekly Schedule - Week 1\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/createSchedule",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"createSchedule"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:06:15 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "153"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"created_at\": \"2025-12-03T13:06:15.126524\",\n    \"created_by\": 1,\n    \"id\": 1,\n    \"name\": \"Weekly Schedule - Week 1\",\n    \"shift_count\": 0,\n    \"shifts\": []\n}"
+						}
+					]
+				},
+				{
+					"name": "Create Another Schedule",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Second schedule created\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"scheduleName\": \"Evening Schedule - Week 1\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/createSchedule",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"createSchedule"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Create Another Schedule",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"scheduleName\": \"Evening Schedule - Week 1\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/createSchedule",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"createSchedule"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:06:35 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "154"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"created_at\": \"2025-12-03T13:06:35.471817\",\n    \"created_by\": 1,\n    \"id\": 2,\n    \"name\": \"Evening Schedule - Week 1\",\n    \"shift_count\": 0,\n    \"shifts\": []\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Admin - Shifts",
+			"item": [
+				{
+					"name": "Create Shift for Jane",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"console.log(\"Creating shift for schedule:\", pm.environment.get(\"schedule_id\"));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Shift created successfully\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Shift has required fields\", function() {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property('id');\r",
+									"    pm.expect(jsonData).to.have.property('staff_id');\r",
+									"    pm.expect(jsonData).to.have.property('schedule_id');\r",
+									"    pm.expect(jsonData).to.have.property('start_time');\r",
+									"    pm.expect(jsonData).to.have.property('end_time');\r",
+									"    \r",
+									"    // Save shift_id for later use\r",
+									"    pm.environment.set(\"shift_id\", jsonData.id);\r",
+									"});\r",
+									"\r",
+									"console.log(\"Shift created with ID:\", pm.environment.get(\"shift_id\"));\r",
+									"console.log(\"Assigned to staff:\", pm.response.json().staff_name);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"scheduleID\": {{schedule_id}},\r\n    \"staffID\": 2,\r\n    \"start_time\": \"2025-12-10 08:00:00\",\r\n    \"end_time\": \"2025-12-10 16:00:00\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/createShift",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"createShift"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Create Shift for Jane",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"scheduleID\": {{schedule_id}},\r\n    \"staffID\": 2,\r\n    \"start_time\": \"2025-12-10 08:00:00\",\r\n    \"end_time\": \"2025-12-10 16:00:00\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/createShift",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"createShift"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:07:20 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "192"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"clock_in\": null,\n    \"clock_out\": null,\n    \"end_time\": \"2025-12-10T16:00:00\",\n    \"id\": 4,\n    \"schedule_id\": 1,\n    \"staff_id\": 2,\n    \"staff_name\": \"jane\",\n    \"start_time\": \"2025-12-10T08:00:00\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Create Shift for Alice",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Shift created for Alice\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.staff_id).to.eql(3);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"scheduleID\": {{schedule_id}},\r\n    \"staffID\": 3,\r\n    \"start_time\": \"2025-12-10 16:00:00\",\r\n    \"end_time\": \"2025-12-11 00:00:00\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/createShift",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"createShift"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Create Shift for Alice",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"scheduleID\": {{schedule_id}},\r\n    \"staffID\": 3,\r\n    \"start_time\": \"2025-12-10 16:00:00\",\r\n    \"end_time\": \"2025-12-11 00:00:00\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/createShift",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"createShift"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:07:33 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "193"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"clock_in\": null,\n    \"clock_out\": null,\n    \"end_time\": \"2025-12-11T00:00:00\",\n    \"id\": 5,\n    \"schedule_id\": 1,\n    \"staff_id\": 3,\n    \"staff_name\": \"alice\",\n    \"start_time\": \"2025-12-10T16:00:00\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Create Multiple Day Shifts",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Additional shift created\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"scheduleID\": {{schedule_id}},\r\n    \"staffID\": 2,\r\n    \"start_time\": \"2025-12-11 08:00:00\",\r\n    \"end_time\": \"2025-12-11 16:00:00\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/createShift",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"createShift"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Create Multiple Day Shifts",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"scheduleID\": {{schedule_id}},\r\n    \"staffID\": 2,\r\n    \"start_time\": \"2025-12-11 08:00:00\",\r\n    \"end_time\": \"2025-12-11 16:00:00\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/createShift",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"createShift"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:07:49 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "192"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"clock_in\": null,\n    \"clock_out\": null,\n    \"end_time\": \"2025-12-11T16:00:00\",\n    \"id\": 6,\n    \"schedule_id\": 1,\n    \"staff_id\": 2,\n    \"staff_name\": \"jane\",\n    \"start_time\": \"2025-12-11T08:00:00\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Shift Report",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Shift report retrieved successfully\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Report is an array\", function() {\r",
+									"    var report = pm.response.json();\r",
+									"    pm.expect(report).to.be.an('array');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Report contains shift details\", function() {\r",
+									"    var report = pm.response.json();\r",
+									"    if (report.length > 0) {\r",
+									"        pm.expect(report[0]).to.have.property('staff_name');\r",
+									"        pm.expect(report[0]).to.have.property('start_time');\r",
+									"        pm.expect(report[0]).to.have.property('end_time');\r",
+									"        pm.expect(report[0]).to.have.property('schedule_id');\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"console.log(\"Total shifts in report:\", pm.response.json().length);\r",
+									"// Log all staff members with shifts\r",
+									"pm.response.json().forEach(shift => {\r",
+									"    console.log(`${shift.staff_name}: ${shift.start_time} - ${shift.end_time}`);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/shiftReport",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"shiftReport"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Get Shift Report",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/shiftReport",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"shiftReport"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:08:05 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1283"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-10T16:00:00\",\n        \"id\": 1,\n        \"schedule_id\": 1,\n        \"staff_id\": 2,\n        \"staff_name\": \"jane\",\n        \"start_time\": \"2025-12-10T08:00:00\"\n    },\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-10T16:00:00\",\n        \"id\": 4,\n        \"schedule_id\": 1,\n        \"staff_id\": 2,\n        \"staff_name\": \"jane\",\n        \"start_time\": \"2025-12-10T08:00:00\"\n    },\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-11T00:00:00\",\n        \"id\": 2,\n        \"schedule_id\": 1,\n        \"staff_id\": 3,\n        \"staff_name\": \"alice\",\n        \"start_time\": \"2025-12-10T16:00:00\"\n    },\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-11T00:00:00\",\n        \"id\": 5,\n        \"schedule_id\": 1,\n        \"staff_id\": 3,\n        \"staff_name\": \"alice\",\n        \"start_time\": \"2025-12-10T16:00:00\"\n    },\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-11T16:00:00\",\n        \"id\": 3,\n        \"schedule_id\": 1,\n        \"staff_id\": 2,\n        \"staff_name\": \"jane\",\n        \"start_time\": \"2025-12-11T08:00:00\"\n    },\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-11T16:00:00\",\n        \"id\": 6,\n        \"schedule_id\": 1,\n        \"staff_id\": 2,\n        \"staff_name\": \"jane\",\n        \"start_time\": \"2025-12-11T08:00:00\"\n    }\n]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Staff - Roster",
+			"item": [
+				{
+					"name": "View Combined Roster (Jane)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Roster retrieved successfully\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Roster is an array\", function() {\r",
+									"    var roster = pm.response.json();\r",
+									"    pm.expect(roster).to.be.an('array');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Roster contains shift information\", function() {\r",
+									"    var roster = pm.response.json();\r",
+									"    if (roster.length > 0) {\r",
+									"        pm.expect(roster[0]).to.have.property('id');\r",
+									"        pm.expect(roster[0]).to.have.property('staff_id');\r",
+									"        pm.expect(roster[0]).to.have.property('start_time');\r",
+									"        pm.expect(roster[0]).to.have.property('end_time');\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"console.log(\"Total shifts in roster:\", pm.response.json().length);\r",
+									"pm.response.json().forEach(shift => {\r",
+									"    console.log(`Shift ${shift.id}: ${shift.start_time} - ${shift.end_time}`);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staff_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staff_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/staff/roster",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"staff",
+								"roster"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "View Combined Roster (Jane)",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{staff_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/staff/roster",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"staff",
+										"roster"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:08:39 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1283"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-10T16:00:00\",\n        \"id\": 1,\n        \"schedule_id\": 1,\n        \"staff_id\": 2,\n        \"staff_name\": \"jane\",\n        \"start_time\": \"2025-12-10T08:00:00\"\n    },\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-10T16:00:00\",\n        \"id\": 4,\n        \"schedule_id\": 1,\n        \"staff_id\": 2,\n        \"staff_name\": \"jane\",\n        \"start_time\": \"2025-12-10T08:00:00\"\n    },\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-11T00:00:00\",\n        \"id\": 2,\n        \"schedule_id\": 1,\n        \"staff_id\": 3,\n        \"staff_name\": \"alice\",\n        \"start_time\": \"2025-12-10T16:00:00\"\n    },\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-11T00:00:00\",\n        \"id\": 5,\n        \"schedule_id\": 1,\n        \"staff_id\": 3,\n        \"staff_name\": \"alice\",\n        \"start_time\": \"2025-12-10T16:00:00\"\n    },\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-11T16:00:00\",\n        \"id\": 3,\n        \"schedule_id\": 1,\n        \"staff_id\": 2,\n        \"staff_name\": \"jane\",\n        \"start_time\": \"2025-12-11T08:00:00\"\n    },\n    {\n        \"clock_in\": null,\n        \"clock_out\": null,\n        \"end_time\": \"2025-12-11T16:00:00\",\n        \"id\": 6,\n        \"schedule_id\": 1,\n        \"staff_id\": 2,\n        \"staff_name\": \"jane\",\n        \"start_time\": \"2025-12-11T08:00:00\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "View Specific Shift",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Shift details retrieved\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Shift has all details\", function() {\r",
+									"    var shift = pm.response.json();\r",
+									"    pm.expect(shift).to.have.property('id');\r",
+									"    pm.expect(shift).to.have.property('staff_id');\r",
+									"    pm.expect(shift).to.have.property('staff_name');\r",
+									"    pm.expect(shift).to.have.property('start_time');\r",
+									"    pm.expect(shift).to.have.property('end_time');\r",
+									"});\r",
+									"\r",
+									"console.log(\"Shift details:\", pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staff_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"shiftID\": {{shift_id}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/staff/shift",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"staff",
+								"shift"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "View Specific Shift",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"shiftID\": {{shift_id}}\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/staff/shift",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"staff",
+										"shift"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:08:53 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "192"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"clock_in\": null,\n    \"clock_out\": null,\n    \"end_time\": \"2025-12-10T16:00:00\",\n    \"id\": 4,\n    \"schedule_id\": 1,\n    \"staff_id\": 2,\n    \"staff_name\": \"jane\",\n    \"start_time\": \"2025-12-10T08:00:00\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Staff - ClockIn/Out",
+			"item": [
+				{
+					"name": "Clock In",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"console.log(\"Clocking in for shift:\", pm.environment.get(\"shift_id\"));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Clocked in successfully\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Clock in time recorded\", function() {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property('clock_in');\r",
+									"    pm.expect(jsonData.clock_in).to.not.be.null;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Clock out is still null\", function() {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.clock_out).to.be.null;\r",
+									"});\r",
+									"\r",
+									"console.log(\"Clocked in at:\", pm.response.json().clock_in);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staff_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"shiftID\": {{shift_id}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/staff/clock_in",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"staff",
+								"clock_in"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Clock In",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"shiftID\": {{shift_id}}\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/staff/clock_in",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"staff",
+										"clock_in"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:09:07 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "216"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"clock_in\": \"2025-12-03T09:09:07.666295\",\n    \"clock_out\": null,\n    \"end_time\": \"2025-12-10T16:00:00\",\n    \"id\": 1,\n    \"schedule_id\": 1,\n    \"staff_id\": 2,\n    \"staff_name\": \"jane\",\n    \"start_time\": \"2025-12-10T08:00:00\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Clock Out",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Clocked out successfully\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Clock out time recorded\", function() {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property('clock_out');\r",
+									"    pm.expect(jsonData.clock_out).to.not.be.null;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Both clock in and out are present\", function() {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.clock_in).to.not.be.null;\r",
+									"    pm.expect(jsonData.clock_out).to.not.be.null;\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Clock out is after clock in\", function() {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    var clockIn = new Date(jsonData.clock_in);\r",
+									"    var clockOut = new Date(jsonData.clock_out);\r",
+									"    pm.expect(clockOut.getTime()).to.be.above(clockIn.getTime());\r",
+									"});\r",
+									"\r",
+									"console.log(\"Clocked out at:\", pm.response.json().clock_out);\r",
+									"console.log(\"Clocked in at:\", pm.response.json().clock_in);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staff_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"shiftID\": {{shift_id}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/staff/clock_out",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"staff",
+								"clock_out"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Clock Out",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"shiftID\": {{shift_id}}\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/staff/clock_out",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"staff",
+										"clock_out"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:21:34 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "240"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"clock_in\": \"2025-12-03T09:21:29.433875\",\n    \"clock_out\": \"2025-12-03T09:21:34.965565\",\n    \"end_time\": \"2025-12-10T16:00:00\",\n    \"id\": 1,\n    \"schedule_id\": 1,\n    \"staff_id\": 2,\n    \"staff_name\": \"jane\",\n    \"start_time\": \"2025-12-10T08:00:00\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Notifications",
+			"item": [
+				{
+					"name": "Get All Notifications (Staff)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Notifications retrieved successfully\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Notifications is an array\", function() {\r",
+									"    var notifications = pm.response.json();\r",
+									"    pm.expect(notifications).to.be.an('array');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Notifications have required fields\", function() {\r",
+									"    var notifications = pm.response.json();\r",
+									"    if (notifications.length > 0) {\r",
+									"        pm.expect(notifications[0]).to.have.property('id');\r",
+									"        pm.expect(notifications[0]).to.have.property('receiver_id');\r",
+									"        pm.expect(notifications[0]).to.have.property('message');\r",
+									"        pm.expect(notifications[0]).to.have.property('read');\r",
+									"        pm.expect(notifications[0]).to.have.property('timestamp');\r",
+									"        \r",
+									"        // Save first notification ID if exists\r",
+									"        pm.environment.set(\"notification_id\", notifications[0].id);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"console.log(\"Total notifications:\", pm.response.json().length);\r",
+									"pm.response.json().forEach(notif => {\r",
+									"    console.log(`[${notif.read ? 'READ' : 'UNREAD'}] ${notif.message}`);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staff_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/notifications",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Get All Notifications (Staff)",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/notifications",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"notifications"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Werkzeug/3.0.1 Python/3.13.9"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 03 Dec 2025 13:21:46 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "3"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								}
+							],
+							"cookie": [],
+							"body": "[]"
+						}
+					]
+				}
+			]
+		}
+	]
+}
