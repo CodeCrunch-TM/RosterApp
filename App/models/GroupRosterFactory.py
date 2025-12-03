@@ -4,6 +4,8 @@ from App.models.SingleRosterFactory import SingleRosterFactory
 from App.models.ScheduleGroup import ScheduleGroup
 from App.models.schedule import Schedule
 from App.models.strategies.EvenDistributionStrategy import EvenDistributionStrategy
+from App.models.strategies.DayNightBalancedScheduling import DayNightBalancedScheduling
+from App.models.strategies.MinimizeDaySchedulingStrategy import MinimizeDaySchedulingStrategy
 
 
 class GroupRosterFactory(RosterFactory): #class diagram might need updating
@@ -11,7 +13,9 @@ class GroupRosterFactory(RosterFactory): #class diagram might need updating
     def __init__(self) -> None:
         self._single = SingleRosterFactory()
         self._strategies = {
-            "even": EvenDistributionStrategy()
+            "even_distribution": EvenDistributionStrategy(),
+            "day_night_balanced": DayNightBalancedScheduling(),
+            "minimize_day": MinimizeDaySchedulingStrategy(),
         }
         
     def get_strategy(self, name: str):

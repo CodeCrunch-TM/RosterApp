@@ -31,9 +31,20 @@ class StaffTests(unittest.TestCase):
         self.assertEqual(roster[0]["schedule_id"], schedule.id)
 
     @pytest.mark.unit
-    def test_clock_in_and_out(self):
+    def test_get_combined_roster_invalid(self):
+        non_staff = create_user("admin4", "adminpass", "admin")
+        try:
+            get_combined_roster(non_staff.id)
+            assert False, "Expected PermissionError for non-staff"
+        except PermissionError as e:
+            assert str(e) == "Only staff can view roster"
+
+
+    @pytest.mark.unit
+    def test_clock_in_valid(self):
         admin = create_user("admin_clock", "adminpass", "admin")
         staff = create_user("staff_clock", "staffpass", "staff")
+
         schedule = Schedule(name="Clock Schedule", created_by=admin.id)
         db.session.add(schedule)
         db.session.commit()
@@ -42,14 +53,73 @@ class StaffTests(unittest.TestCase):
         end = datetime(2025, 10, 25, 16, 0, 0)
         shift = schedule_shift(admin.id, staff, schedule, start, end)
 
-        clock_in(staff.id, shift.id)
-        clock_out(staff.id, shift.id)
+        clocked_in_shift = clock_in(staff.id, shift.id)
+        assert clocked_in_shift.clock_in is not None
+        assert isinstance(clocked_in_shift.clock_in, datetime)
 
-        updated_shift = get_shift(shift.id)
-        self.assertIsNotNone(updated_shift.clock_in)
-        self.assertIsNotNone(updated_shift.clock_out)
-        self.assertLess(updated_shift.clock_in, updated_shift.clock_out)
+    @pytest.mark.unit
+    def test_clock_in_invalid_user(self):
+        admin = create_user("admin_clockin", "adminpass", "admin")
+        schedule = Schedule(name="Invalid Clock In", created_by=admin.id)
+        db.session.add(schedule)
+        db.session.commit()
 
+        staff = create_user("staff_invalid", "staffpass", "staff")
+        start = datetime(2025, 10, 26, 8, 0, 0)
+        end = datetime(2025, 10, 26, 16, 0, 0)
+        shift = schedule_shift(admin.id, staff, schedule, start, end)
+
+        with pytest.raises(PermissionError) as e:
+            clock_in(admin.id, shift.id)
+        assert str(e.value) == "Only staff can clock in"
+
+    @pytest.mark.unit
+    def test_clock_in_invalid_shift(self):
+        staff = create_user("clockstaff_invalid", "clockpass", "staff")
+        with pytest.raises(ValueError) as e:
+            clock_in(staff.id, 999)
+        assert str(e.value) == "Invalid shift for staff"
+
+    @pytest.mark.unit
+    def test_clock_out_valid(self):
+        admin = create_user("admin_clockout", "adminpass", "admin")
+        staff = create_user("staff_clockout", "staffpass", "staff")
+
+        schedule = Schedule(name="ClockOut Schedule", created_by=admin.id)
+        db.session.add(schedule)
+        db.session.commit()
+
+        start = datetime(2025, 10, 27, 8, 0, 0)
+        end = datetime(2025, 10, 27, 16, 0, 0)
+        shift = schedule_shift(admin.id, staff, schedule, start, end)
+
+        clocked_out_shift = clock_out(staff.id, shift.id)
+        assert clocked_out_shift.clock_out is not None
+        assert isinstance(clocked_out_shift.clock_out, datetime)
+
+    @pytest.mark.unit
+    def test_clock_out_invalid_user(self):
+        admin = create_user("admin_invalid_out", "adminpass", "admin")
+        schedule = Schedule(name="Invalid ClockOut Schedule", created_by=admin.id)
+        db.session.add(schedule)
+        db.session.commit()
+
+        staff = create_user("staff_invalid_out", "staffpass", "staff")
+        start = datetime(2025, 10, 28, 8, 0, 0)
+        end = datetime(2025, 10, 28, 16, 0, 0)
+        shift = schedule_shift(admin.id, staff, schedule, start, end)
+
+        with pytest.raises(PermissionError) as e:
+            clock_out(admin.id, shift.id)
+        assert str(e.value) == "Only staff can clock out"
+
+    @pytest.mark.unit
+    def test_clock_out_invalid_shift(self):
+        staff = create_user("staff_invalid_shift_out", "staffpass", "staff")
+        with pytest.raises(ValueError) as e:
+            clock_out(staff.id, 999)  
+        assert str(e.value) == "Invalid shift for staff"
+    
     @pytest.mark.integration
     def test_roster_integration(self):
         admin = create_user("admin", "adminpass", "admin")
@@ -65,3 +135,26 @@ class StaffTests(unittest.TestCase):
         roster = get_combined_roster(staff1.id)
         self.assertTrue(any(s["staff_id"] == staff1.id for s in roster))
         self.assertTrue(any(s["staff_id"] == staff2.id for s in roster))
+        
+    @pytest.mark.integration
+    def test_staff_clock_in_and_out(self):
+        admin = create_user("admin", "adminpass", "admin")
+        staff = create_user("lee", "leepass", "staff")
+
+        schedule = Schedule(name="Daily Schedule", created_by=admin.id)
+        db.session.add(schedule)
+        db.session.commit()
+
+        start = datetime.now()
+        end = start + timedelta(hours=8)
+
+        shift = schedule_shift(admin.id, staff, schedule, start, end)
+
+        clock_in(staff.id, shift.id)
+        clock_out(staff.id, shift.id)
+
+
+        updated_shift = get_shift(shift.id)
+        self.assertIsNotNone(updated_shift.clock_in)
+        self.assertIsNotNone(updated_shift.clock_out)
+        self.assertLess(updated_shift.clock_in, updated_shift.clock_out)

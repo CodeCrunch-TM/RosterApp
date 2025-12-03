@@ -414,7 +414,10 @@ def observer_tests_command(type):
         sys.exit(pytest.main(["App/tests/test_observer_integration.py", "-m", "unit"]))
     else:
         sys.exit(pytest.main(["App/tests/test_observer_integration.py"]))
-
-
+        
+@test.command("all", help="Run all tests")
+def all_tests_command():
+    """Run all tests."""
+    sys.exit(pytest.main(["App/tests/"]))
 
 app.cli.add_command(test)
