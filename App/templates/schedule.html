@@ -13,14 +13,14 @@
         </div>
         <div>
             <select name="user_id" id="user_id">
-                <option value="">Select a user</option>
-                {% for user in users %}
-                    <option value="{{ user.id }}" id="staffID" >{{ user.username }}</option>
+                <option value="">View existing schedules</option>
+                {% for schedule in schedules %}
+                    <option>{{ schedule.name }}</option>
                 {% endfor %}
             </select>
         </div>
         <div>
-            <button type="submit" >Create Schedule</button>
+            <button type="submit" class="btn waves-effect waves-light">Create Schedule</button>
         </div>
     </form>
 {% endblock %}

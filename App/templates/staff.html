@@ -5,14 +5,24 @@
 {{ super() }}
 
 {% block content %}
-    <h2>Login</h2>
-    <form method="" action="/viewSchedule">
-            <button type="submit" >Schedule View</button>
-    </form>
-    <form method="POST" action="/staff/clock_in">
-            <button type="submit" >Clock In</button>
-    </form>
-    <form method="POST" action="/staff/clock_out">
-            <button type="submit" >Clock Out</button>
-    </form>
+        <h3>Welcome {{ user.username }}</h3>
+        
+        <div class="row">
+                <div class="col s12 m6">
+                <form method="POST" action="/staff/clock_in">
+                        <button type="submit" class="btn waves-effect waves-light teal btn-large" style="width: 100%;">
+                        <i class="material-icons left">access_time</i>
+                        Clock In
+                        </button>
+                </form>
+                </div>
+                <div class="col s12 m6">
+                <form method="POST" action="/staff/clock_out">
+                        <button type="submit" class="btn waves-effect waves-light teal btn-large" style="width: 100%;">
+                        <i class="material-icons left">exit_to_app</i>
+                        Clock Out
+                        </button>
+                </form>
+                </div>
+        </div>
 {% endblock %}
