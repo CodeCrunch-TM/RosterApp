@@ -150,8 +150,8 @@ def autopopulate_options():
     user = User.query.get(user_id)
     return render_template("autopopulateOptions.html", user=user)
     
-@admin_view.route('/autopopulate', methods=['GET', 'POST'])
-@jwt_required()
+@admin_view.route('/autopopulate', methods=['POST'])
+@jwt_required(locations=["cookies"])
 def autopopulate():
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
