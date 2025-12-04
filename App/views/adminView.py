@@ -135,9 +135,14 @@ def createShift():
 def shiftReport():
     try:
         admin_id = get_jwt_identity()
+        user = User.query.get(admin_id)
         report = adminController.get_shift_report(admin_id)
-        return jsonify(report), 200
-
+        
+        try:
+            return render_template("report.html", user=user, report=report)
+        except:
+            return jsonify(report), 200
+        
     except (PermissionError, ValueError) as e:
         return jsonify({"error": str(e)}), 403
     except SQLAlchemyError:
