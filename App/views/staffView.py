@@ -76,7 +76,7 @@ def clock_in():
         shift_id = shift.id
         shiftOBJ = staff.clock_in(staff_id, shift_id)  # Call controller
         try:
-            flash(f'Shift Clock out successful')
+            flash(f'Shift Clock in successful')
             return redirect(url_for('staff_views.get_staff_page'))
         except:
             return jsonify(shiftOBJ.get_json()), 200
