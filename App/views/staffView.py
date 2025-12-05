@@ -1,5 +1,5 @@
 # app/views/staff_views.py
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, redirect, url_for, flash
 from App.controllers import staff
 from App.controllers.notification import get_user_notifications, mark_as_read
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -75,7 +75,11 @@ def clock_in():
         shift = Shift.query.filter_by(staff_id=staff_id).first()
         shift_id = shift.id
         shiftOBJ = staff.clock_in(staff_id, shift_id)  # Call controller
-        return jsonify(shiftOBJ.get_json()), 200
+        try:
+            flash(f'Shift Clock out successful')
+            return redirect(url_for('staff_views.get_staff_page'))
+        except:
+            return jsonify(shiftOBJ.get_json()), 200
     except (PermissionError, ValueError) as e:
         return jsonify({"error": str(e)}), 403
     except SQLAlchemyError:
@@ -96,7 +100,11 @@ def clock_out():
         shift = Shift.query.filter_by(staff_id=staff_id).first()
         shift_id = shift.id
         shift = staff.clock_out(staff_id, shift_id)  # Call controller
-        return jsonify(shift.get_json()), 200
+        try:
+            flash(f'Shift Clock out successful')
+            return redirect(url_for('staff_views.get_staff_page'))
+        except:
+            return jsonify(shift.get_json()), 200
     except (PermissionError, ValueError) as e:
         return jsonify({"error": str(e)}), 403
     except SQLAlchemyError:
