@@ -42,7 +42,7 @@ def create_user_endpoint():
     if(data['confirm_password'] == data['password']) and not request.is_json:
         user = create_user(data['username'], data['password'], data['role']) 
         flash(f"User {data['username']} created!")
-        pass
+        return redirect(url_for('admin_view.get_newuser_page'))
     else:
         user = create_user(data['username'], data['password'], data['role']) 
         return jsonify({'message': f"user {user.username} created with id {user.id}"}), 201
