@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% block title %}Roster App{% endblock %}
+{% block page %}Roster App{% endblock %}
+{{ super() }}
+{% block content %}
+    <div class="row">
+        <h4>Shift Report</h4>
+        <p>Summary of all shifts assigned to staff members</p>
+    </div>
+    
+    {% if report %}
+        <div class="row">
+            <table class="striped">
+                <thead>
+                    <tr>
+                        <th>Staff ID</th>
+                        <th>Username</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Schedule ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shift in report %}
+                        <tr>
+                            <td>{{ shift.staff_id }}</td>
+                            <td>{{ shift.staff.username if shift.staff else 'N/A' }}</td>
+                            <td>{{ shift.start_time }}</td>
+                            <td>{{ shift.end_time }}</td>
+                            <td>{{ shift.schedule_id }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="row">
+            <p>No shift report data available.</p>
+        </div>
+    {% endif %}
+    
+    <div class="row">
+        <a href="{{ url_for('admin_view.get_admin_page') }}" class="btn waves-effect waves-light">Back to Admin</a>
+    </div>
+{% endblock %}
